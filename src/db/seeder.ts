@@ -1,7 +1,7 @@
 /* #region Seed and Query */
 import { eq } from 'drizzle-orm';
-import { usersTable } from './schema';
-import { db } from '../db_index';
+import { users } from './schema';
+import { db } from './db_index';
 
 async function seeder() {
     const user: typeof usersTable.$inferInsert = {
