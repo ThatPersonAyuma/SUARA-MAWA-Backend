@@ -29,16 +29,19 @@ export const fileTypeEnum = pgEnum("file_type_enum", [
 /* #endregion */
 
 /* #region Lookup / reference tables */
+// User roles=> ["Mahasiswa", "Admin", "Penindak"]
 export const userRoles = pgTable("user_roles", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull().unique(),
 });
 
+// Departements => ["Kemahasiswaan", "TU"]
 export const departments = pgTable("departments", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull().unique(),
 });
 
+// Categories => ["Prasarana", "Mata Kuliah", "Pengajar"]
 export const categories = pgTable("categories", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull().unique(),
@@ -60,6 +63,7 @@ export const users = pgTable("users", {
     .notNull()
     .references(() => userRoles.id),
   lastLogin: timestamp("last_login").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
   email: varchar({ length: 255 }).notNull().unique(),
   phoneNumber: varchar("phone_number", { length: 255 }).notNull().unique(),
   photoProfileId: integer("photo_profile_id")
@@ -68,6 +72,8 @@ export const users = pgTable("users", {
   emailVerifiedAt: timestamp("email_verified_at"),
   phoneVerifiedAt: timestamp("phone_verified_at"),
 });
+export type UsersSelect = typeof users.$inferSelect;
+export type UsersInsert = typeof users.$inferInsert;
 /* #endregion */
 
 /* #region User detail tables */

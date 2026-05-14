@@ -4,7 +4,8 @@
   "scripts": {
     "start": "bun run main.ts",
     "typecheck": "tsc",
-    "predev": "drizzle-kit push"
+    "predev": "drizzle-kit push",
+    "db:seed": "bun run src/db/seeder.ts"
   },
   "devDependencies": {
     "@types/bun": "1",
@@ -16,7 +17,9 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "elysia": "1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "zod": "^4.4.3"
   }
 }
