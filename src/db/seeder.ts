@@ -1,6 +1,6 @@
 /* #region Seed and Query */
 import { eq } from 'drizzle-orm';
-import { categories, departments, userRoles, users } from './schema';
+import { categories, departments, userRoles} from './app_schema';
 import { db } from './db_index';
 
 async function seeder() {

@@ -1,9 +1,11 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/db_index';
-import {userRoles, users, UsersInsert, } from '../../db/schema';
-import { insertUserSchema, selectUserSchema, updateUserSchema } from '../../db/validation';
+import {userRoles} from '../../db/app_schema';
+import { users, UsersInsert} from '../../db/auth_schema';
+import { insertUserSchema, updateUserSchema } from '../../db/validation';
 import { OptResult } from '../shared';
 import Elysia, { status, t } from 'elysia';
+import { auth } from './auth';
 
 async function insertMahasiswa(req_body: unknown): Promise<OptResult> {
     try {
@@ -84,5 +86,6 @@ export function setup(app: Elysia){
             }else{
                 return status(500, {msg: res.message});
             }
-        });
+        })
+        .mount(auth.handler);
 }
