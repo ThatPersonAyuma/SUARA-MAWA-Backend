@@ -16,6 +16,7 @@
     "typescript": "5"
   },
   "dependencies": {
+    "@elysia/cors": "^1.4.2",
     "better-auth": "^1.6.11",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
