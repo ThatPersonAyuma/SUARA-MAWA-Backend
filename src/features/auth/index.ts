@@ -70,8 +70,17 @@ import { auth } from './auth';
 //     }
 // }   
 
+function on_boarding_page(){
+    const onBoarding = new Elysia();
+}
+
 export function auth_setup(app: Elysia){
-    const betterAuth = new Elysia({name: 'better-auth'})
+    const betterAuth = new Elysia({name: 'better-auth',
+        cookie: {
+        // WAJIB: Samakan dengan BETTER_AUTH_SECRET di .env kamu
+            secrets: process.env.BETTER_AUTH_SECRET 
+        }
+    })
         .mount(auth.handler)
         .macro({
             auth: {
@@ -82,20 +91,22 @@ export function auth_setup(app: Elysia){
                     if (!session) return status(401);
                     const user = await db.query.users.findFirst({
                                 where: eq(users.email, session.user.email), // Filter user condition
-                                with: {
-                                    userRole: {
-                                        where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
-                                        columns: { name: true }, // Select specific fields in the relation
-                                    },
-                                    photoProfile: {
-                                        where: eq(files.id, session.user.image!), // Filter nested posts condition
-                                        columns: { name: true, filetype: true },
-                                    }
-                                },
+                                // with: {
+                                //     userRole: {
+                                //         where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
+                                //         columns: { name: true }, // Select specific fields in the relation
+                                //     },
+                                //     photoProfile: {
+                                //         where: eq(files.id, session.user.image!), // Filter nested posts condition
+                                //         columns: { name: true, filetype: true },
+                                //     }
+                                // },
                                 columns: {
                                     id: true, // Select specific user fields
                                     name: true,
                                     email: true,
+                                    photoProfileId: true,
+                                    userRoleId: true,
                                 },
                                 });
                     return {
@@ -106,6 +117,29 @@ export function auth_setup(app: Elysia){
             }
         });
     app.use(betterAuth)
+        .get('/login/oauth', async ({ redirect, headers }) => {
+    // 1. Panggil API Better Auth untuk membuat URL sign-in Google
+            const res = await auth.api.signInSocial({
+                body: {
+                    provider: "google",
+                    // Pastikan callbackURL menggunakan URL absolut frontend kamu nanti
+                    // Contoh: "http://localhost:3000/dashboard" atau "https://suaramawa.com/dashboard"
+                    callbackURL: "http://localhost:3000/setup/password", 
+                },
+            });
+
+            // 2. Cek apakah Better Auth berhasil membuat URL redirect
+            if (res && res.url) {
+                // Ambil URL Google tersebut dan redirect user ke sana
+                return redirect(res.url);
+            }
+
+            // Gagal membuat URL redirect
+            return {
+                success: false,
+                message: "Gagal menginisialisasi OAuth Google"
+            };
+        })
         // .post('/user/registration', async (context)=> {
         //     let res: OptResult = await insertMahasiswa(context.body);
         //     if (res.status=="success"){

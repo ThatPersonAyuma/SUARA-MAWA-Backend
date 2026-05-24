@@ -4,7 +4,7 @@ import { z } from "zod";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../../db/db_index";
-import { jwt } from "better-auth/plugins";
+import { jwt, phoneNumber } from "better-auth/plugins";
 import * as schema from "../../db/auth_schema";
 import { insertUserSchema } from "../../db/validation";
 import { eq } from "drizzle-orm";
@@ -30,7 +30,71 @@ const resend = new Resend(process.env.RESEND_SECRET_KEY!);
 export const auth = betterAuth({
     plugins: [
         jwt(),
+        phoneNumber({
+            sendOTP: async ({ phoneNumber, code }, ctx) => {
+                // Example integration with WhatsApp API
+                console.log(code)
+                const response = await fetch("https://your-whatsapp-provider.com", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.WHATSAPP_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: phoneNumber,
+                    type: "template",
+                    template: {
+                    name: "your_otp_template_name", // Must be Meta approved
+                    language: { code: "en" },
+                    components: [
+                        {
+                        type: "body",
+                        parameters: [
+                            { type: "text", text: code }
+                        ]
+                        }
+                    ]
+                    }
+                }),
+                });
+
+                if (!response.ok) {
+                throw new Error("Failed to send WhatsApp OTP");
+                }
+            },
+            }),
     ],
+    account: {
+        skipStateCookieCheck: true,
+        accountLinking: {
+            trustedProviders: ["google"], // Add your providers here
+        }
+    },
+    oauthConfig: {
+        // Hanya bypass state check saat di luar production (development)
+        skipStateCookieCheck: process.env.NODE_ENV!='production', 
+    },
+    cookie: {
+        // Wajib TRUE di prod karena HTTPS aman. False saat dev (http://localhost)
+        secure: process.env.NODE_ENV=='production', 
+        // Lax adalah opsi paling aman untuk flow redirect OAuth agar tidak diblokir browser modern
+        sameSite: "lax", 
+    },
+    secret: process.env.BETTER_AUTH_SECRET,
+    // advanced: {
+    //     cookiePrefix: "myapp-auth", // Custom prefix for your app's cookies
+    //     cookieOptions: {
+    //     sameSite: "lax",
+    //     secure: process.env.NODE_ENV === "production", // HttpOnly and Secure in prod
+    //     },
+    //     // revokeSessionsOnPasswordReset: true, // Uncomment to revoke all other sessions on a successful password reset
+    // },
+    // cookie: {
+    //     secure: false, // Wajib false karena localhost menggunakan HTTP biasa
+    //     sameSite: "lax", // Mengizinkan cookie dibawa saat redirect dari luar (Google)
+    // },
     database: drizzleAdapter(db, {
             provider: "pg", // atau sqlite / mysql
             schema:{
@@ -46,8 +110,8 @@ export const auth = betterAuth({
         additionalFields: {
             phoneNumber: {
                 type:"string",
-                required: true,
-                input:true
+                required: false,
+                input:false
             },
             userRoleId: {
                 type: "number",
@@ -55,6 +119,39 @@ export const auth = betterAuth({
                 input: true,
             },
         }
+    },
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (user) => {
+                    if (!user.email.endsWith("@unej.ac.id")) {
+                        // Jika TIDAK SESUAI, lempar APIError.
+                        // Ini akan otomatis membatalkan penulisan ke database.
+                        throw new APIError("BAD_REQUEST", {
+                            message: "Pendaftaran gagal. Anda harus menggunakan email resmi @unej.ac.id!",
+                        });
+                    }
+                    const roleResult = await db
+                        .select({ id: userRoles.id })
+                        .from(userRoles)
+                        .where(eq(userRoles.name, "MAHASISWA"))
+                        .limit(1);
+                    console.log(roleResult);
+                    // 2. Berikan validasi aman (fallback) jika database kosong
+                    // Jika ketemu, pakai ID-nya. Jika tidak ketemu, default ke ID 1 (atau ID role mahasiswa kamu)
+                    const finalRoleId = (roleResult.length > 0) ? roleResult[0].id : 1;
+                    return {
+                        data: {
+                            ...user,
+                            // Paksa nilai image menjadi null atau undefined 
+                            // agar database mengosonginya atau menggunakan nilai DEFAULT
+                            image: null, 
+                            userRoleId: finalRoleId,
+                        },
+                    };
+                },
+            },
+        },
     },
     emailAndPassword: {
         autoSignIn: false,
@@ -65,7 +162,34 @@ export const auth = betterAuth({
         google: { // Contoh OAuth2 Google
             clientId: process.env.GOOGLE_CLIENT_ID!,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            prompt: "select_account",
+            authorizationQuery: {
+                hd: "unej.ac.id", // Forces users to sign in with this specific Google Apps domain
+            },
         },
+    },
+    trustedOrigins: [
+        "https://yourdomain.com", 
+        "myapp://", // Custom scheme for mobile apps
+        "http://localhost:3000"
+    ],
+    advanced: {
+        cookies: {
+        state: {
+            attributes: {
+                sameSite: "none",
+                secure: true,
+                },
+            },
+        },
+    },
+    async signInSocial() {
+        console.log('signing in with google')
+        await auth.api.signInSocial({
+            body: {
+                provider: "google", // or any other provider id
+            },
+        });
     },
     emailVerification: {
         sendOnSignUp: true,
@@ -87,8 +211,11 @@ export const auth = betterAuth({
             console.log('Berhasil dikirim dengan ID:', data.id);
         },
         async beforeEmailVerification(user, request) {
-            // Run pre-verification logic
-            console.log(`About to verify ${user.email}`);
+            await db.update(schema.users)
+                .set({
+                    emailVerifiedAt: new Date()
+                })
+                .where(eq(schema.users.id, user.id));
         },
     },
     // Filter domain email NIM.univ.ac.id

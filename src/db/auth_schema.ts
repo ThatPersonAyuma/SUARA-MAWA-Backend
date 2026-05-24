@@ -122,7 +122,7 @@ export const users = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  phoneNumber: text("phone_number").notNull(),
+  phoneNumber: text("phone_number"),
   userRoleId: integer("user_role_id")
     .notNull()
     .references(() => userRoles.id),

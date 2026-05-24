@@ -2,6 +2,7 @@ import { Elysia, file } from 'elysia';
 import { auth_setup } from './src/features/auth/index';
 import { cors } from '@elysia/cors'
 import { fs_setup } from './src/features/filesystem/index';
+import { admin_setup } from './src/features/admin';
 
 function main(){
     const app = new Elysia();
@@ -15,6 +16,7 @@ function main(){
         })
     );
     fs_setup(app);
+    admin_setup(app);
     app.get('/', () => ({ hello: 'Bun👋' }))
          .listen({
             port: 3000,
