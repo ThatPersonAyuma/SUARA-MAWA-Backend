@@ -1,0 +1,8 @@
+Better-Auth API
+Dont forget to put Origin on the header
+POST http://localhost:3000/api/auth/sign-up/email => {name, email}
+POST http://localhost:3000/api/auth/sign-in/email => {email, pw}
+GET http://localhost:3000/api/auth/sign-up/google => // Web oauth, return url adn redirected: bool
+http://localhost:3000/api/auth/callback/google => // Callback google
+GET http://localhost:3000/api/auth/verify-email => // Callback email verification
+http://localhost:3000/api/auth/phone-number/send-otp => {phoneNumber} // Belum bisa
