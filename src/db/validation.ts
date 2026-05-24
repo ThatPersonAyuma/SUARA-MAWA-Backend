@@ -1,7 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { userRoles, departments, categories, files, mahasiswaDetails, adminDetails, penindakDetails, reports, reportEvidences, reportStatus, feedbacks, feedbackAttachments, comments } from "./app_schema";
-import { users } from './auth_schema';
+import { users, userRoles, departments, categories, files, mahasiswaDetails, adminDetails, penindakDetails, reports, reportEvidences, reportStatus, feedbacks, feedbackAttachments, comments } from "./schema";
 
 // --- USER ROLES ---
 export const insertUserRoleSchema = createInsertSchema(userRoles);
@@ -22,29 +21,26 @@ export const selectFileSchema = createSelectSchema(files);
 // --- USERS (With Custom Logic) ---
 export const insertUserSchema = createInsertSchema(users, {
   email: z.email("Format email tidak valid"),
-  password: z.string().min(8, "Password minimal 8 karakter"),
   name: z.string().min(3, "Nama lengkap terlalu pendek"),
   phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid E.164 phone number, use +{country code} rest"),
 }).pick({
-    password: true,
     name:  true,
     email: true,
     phoneNumber: true,
 });
 
 export const selectUserSchema = createSelectSchema(users);
-export const updateUserSchema = createSelectSchema(users, {
-  email: z.email("Format email tidak valid"),
-  password: z.string().min(8, "Password minimal 8 karakter"),
-  fullName: z.string().min(3, "Nama lengkap terlalu pendek"),
-  phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid E.164 phone number"),
-}).pick({
-    id: true,
-    password: true,
-    name:  true,
-    email: true,
-    phoneNumber: true,
-});
+// export const updateUserSchema = createSelectSchema(users, {
+//   email: z.email("Format email tidak valid"),
+//   password: z.string().min(8, "Password minimal 8 karakter"),
+//   fullName: z.string().min(3, "Nama lengkap terlalu pendek"),
+//   phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid E.164 phone number"),
+// }).pick({
+//     id: true,
+//     name:  true,
+//     email: true,
+//     phoneNumber: true,
+// });
 
 // Schema khusus untuk login
 export const loginSchema = z.object({
