@@ -5,12 +5,12 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../../db/db_index";
 import { jwt, phoneNumber } from "better-auth/plugins";
-import * as schema from "../../db/auth_schema";
+import * as schema from "../../db/schema";
 import { insertUserSchema } from "../../db/validation";
 import { eq } from "drizzle-orm";
-import { userRoles } from "../../db/app_schema";
 import { Resend } from "resend";
 import 'dotenv/config';
+import { userRoles } from "../../db/schema";
 
 const signUpPayloadSchema = z.object({
                 // Perhatikan: Key di sini harus sesuai dengan JSON yang dikirim Frontend

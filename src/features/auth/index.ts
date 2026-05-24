@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/db_index';
-import {files, userRoles} from '../../db/app_schema';
-import { users} from '../../db/auth_schema';
+import { userRoles, users } from '../../db/schema';
 // import { insertUserSchema, updateUserSchema } from '../../db/validation';
 import { OptResult } from '../shared';
 import Elysia, { status, t } from 'elysia';
@@ -91,22 +90,22 @@ export function auth_setup(app: Elysia){
                     if (!session) return status(401);
                     const user = await db.query.users.findFirst({
                                 where: eq(users.email, session.user.email), // Filter user condition
-                                // with: {
-                                //     userRole: {
-                                //         where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
-                                //         columns: { name: true }, // Select specific fields in the relation
-                                //     },
+                                with: {
+                                    userRole: {
+                                        where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
+                                        columns: { name: true }, // Select specific fields in the relation
+                                    },
                                 //     photoProfile: {
                                 //         where: eq(files.id, session.user.image!), // Filter nested posts condition
                                 //         columns: { name: true, filetype: true },
                                 //     }
-                                // },
+                                },
                                 columns: {
                                     id: true, // Select specific user fields
                                     name: true,
                                     email: true,
                                     photoProfileId: true,
-                                    userRoleId: true,
+                                    // userRoleId: true,
                                 },
                                 });
                     return {

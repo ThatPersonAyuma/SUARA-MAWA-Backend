@@ -1,8 +1,7 @@
 import { file, status, t } from 'elysia';
 import { db } from '../../db/db_index';
-import { files } from '../../db/app_schema';
+import { files, users } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { users } from '../../db/auth_schema';
 
 export async function getPhotoProfile(name: string){
     const user = await db.query.users.findFirst({
