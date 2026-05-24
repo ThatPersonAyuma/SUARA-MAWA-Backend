@@ -1,7 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { userRoles, departments, categories, files, mahasiswaDetails, adminDetails, penindakDetails, reports, reportEvidences, reportStatus, feedbacks, feedbackAttachments, comments } from "./app_schema";
-import { users } from './auth_schema';
+import { users, userRoles, departments, categories, files, mahasiswaDetails, adminDetails, penindakDetails, reports, reportEvidences, reportStatus, feedbacks, feedbackAttachments, comments } from "./schema";
 
 // --- USER ROLES ---
 export const insertUserRoleSchema = createInsertSchema(userRoles);

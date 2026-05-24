@@ -19,10 +19,6 @@ const signUpPayloadSchema = z.object({
                 // Regex email UNEJ bisa dipindah ke sini, selamat tinggal Hooks! 👋
                 email: z.email({ error: "Email tidak boleh kosong" })
                     .regex(/^[0-9]+@mail\.unej\.ac\.id$/, "Hanya email mahasiswa (NIM@mail.unej.ac.id) yang diizinkan!"),
-                
-                phoneNumber: z.string({
-                    error: "Nomor telepon wajib diisi",
-                }).regex(/^\+[1-9]\d{1,14}$/, "Invalid E.164 phone number, gunakan awalan kode negara (contoh: +628...)"),
             });
 
 const resend = new Resend(process.env.RESEND_SECRET_KEY!);
@@ -83,18 +79,6 @@ export const auth = betterAuth({
         sameSite: "lax", 
     },
     secret: process.env.BETTER_AUTH_SECRET,
-    // advanced: {
-    //     cookiePrefix: "myapp-auth", // Custom prefix for your app's cookies
-    //     cookieOptions: {
-    //     sameSite: "lax",
-    //     secure: process.env.NODE_ENV === "production", // HttpOnly and Secure in prod
-    //     },
-    //     // revokeSessionsOnPasswordReset: true, // Uncomment to revoke all other sessions on a successful password reset
-    // },
-    // cookie: {
-    //     secure: false, // Wajib false karena localhost menggunakan HTTP biasa
-    //     sameSite: "lax", // Mengizinkan cookie dibawa saat redirect dari luar (Google)
-    // },
     database: drizzleAdapter(db, {
             provider: "pg", // atau sqlite / mysql
             schema:{
@@ -108,11 +92,6 @@ export const auth = betterAuth({
             image: "photoProfileId",
         },
         additionalFields: {
-            phoneNumber: {
-                type:"string",
-                required: false,
-                input:false
-            },
             userRoleId: {
                 type: "number",
                 required: true,
@@ -136,7 +115,6 @@ export const auth = betterAuth({
                         .from(userRoles)
                         .where(eq(userRoles.name, "MAHASISWA"))
                         .limit(1);
-                    console.log(roleResult);
                     // 2. Berikan validasi aman (fallback) jika database kosong
                     // Jika ketemu, pakai ID-nya. Jika tidak ketemu, default ke ID 1 (atau ID role mahasiswa kamu)
                     const finalRoleId = (roleResult.length > 0) ? roleResult[0].id : 1;
@@ -228,10 +206,10 @@ export const auth = betterAuth({
                 const parsed = signUpPayloadSchema.safeParse(ctx.body);
                 if (!parsed.success) {
                     const errorMessage =
-                        z.treeifyError(parsed.error).errors[0];
-                    console.log(`Error: ${parsed.error}`);
+                        z.prettifyError(parsed.error);
+                    // console.log(`Error: ${z.treeifyError(parsed.error).properties?.email[0]}`);
                     throw new APIError("BAD_REQUEST", {
-                        message: errorMessage,
+                        message: JSON.stringify(errorMessage),
                     });
                 }
                 // Cari role mahasiswa
