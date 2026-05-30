@@ -1,6 +1,5 @@
 /* #region Seed and Query */
-import { eq } from 'drizzle-orm';
-import { categories, departments, userRoles} from './app_schema';
+import { categories, departments, userRoles} from './schema';
 import { db } from './db_index';
 
 async function seeder() {
@@ -11,7 +10,7 @@ async function seeder() {
         console.log("Inserting roles...");
         await db.insert(userRoles).values([
         { name: "MAHASISWA" },
-        { name: "DOSEN" },
+        { name: "PENINDAK" },
         { name: "ADMIN" },
         ]).onConflictDoNothing();
 

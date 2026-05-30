@@ -14,8 +14,8 @@ export function fs_setup(app: Elysia){
             return `Received: ${file.name} by ${user.name}`;
         }, {
                 body: t.Object({
-                file: t.File()
-            }),
+                    file: t.File()
+                }),
                 auth: true
         });
 } 
