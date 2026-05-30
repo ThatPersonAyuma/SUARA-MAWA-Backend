@@ -50,15 +50,15 @@ export const users = pgTable("users", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  phoneNumber: text("phone_number"),
   userRoleId: integer("user_role_id")
     .notNull()
     .references(() => userRoles.id),
   photoProfileId: integer("photo_profile_id")
     .references(() => files.id)
     .unique(),
+  phoneNumber: text("phone_number").unique(),
+  phoneNumberVerified: boolean("phone_number_verified").default(false),
   emailVerifiedAt: timestamp("email_verified_at"),
-  phoneVerifiedAt: timestamp("phone_verified_at"),
   lastLogin: timestamp("last_login"),
 });
 
@@ -136,7 +136,7 @@ export const mahasiswaDetails = pgTable("mahasiswa_details", {
     .notNull()
     .unique()
     .references(() => users.id),
-  nim: integer().notNull().unique(),
+  nim: varchar({ length: 255 }).notNull().unique(),
 });
 
 export const adminDetails = pgTable("admin_details", {
