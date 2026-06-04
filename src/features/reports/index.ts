@@ -125,7 +125,7 @@ export function reportSetup(app: Elysia){
             .group('/feedback', ()=>
                 app
                 .post('/create', ({body:{ reportId, status, description, files, names,}, user})=>{
-                    return createFeedback(user.Id, reportId, status, description, files, names);
+                    return createFeedback(user.id, reportId, status, description, files, names);
                 },{
                     body: t.Object({
                         reportId: t.Number(),
