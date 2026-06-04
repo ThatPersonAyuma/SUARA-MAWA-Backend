@@ -38,16 +38,20 @@ export function reportSetup(app: Elysia){
                     names: t.Array(t.Nullable(t.String())),
                 }),
         })
-        .get('/my-reports/:currentPage', async ({params:{currentPage}, user})=>{
-            if (currentPage==null)return{
-                'status':'failed',
-                'message':'Current Page tidak ada'
-            };
-            if (!isNumeric(currentPage))return{
-                'status':'failed',
-                'message':'Current Page harus numeric'
-            }
-            return await getMyReports(user.id, Number(currentPage));
+        .get('/my-reports', async ({query:{currentPage}, user})=>{
+            // if (currentPage==null)return{
+            //     'status':'failed',
+            //     'message':'Current Page tidak ada'
+            // };
+            // if (!isNumeric(currentPage))return{
+            //     'status':'failed',
+            //     'message':'Current Page harus numeric'
+            // }
+            return await getMyReports(user.id, currentPage);
+        },{
+            query: t.Object({
+                currentPage: t.Optional(t.Number())
+            })
         })
     )
     .group('/report', 
@@ -65,12 +69,16 @@ export function reportSetup(app: Elysia){
             .get('/status/all', ()=>{
                 return getAllReportStatus(); // return list
             })
-            .get('/all/:currentPage', async ({params:{currentPage}})=>{
-                if (!isNumeric(currentPage))return{
-                    'status':'failed',
-                    'message':'Id harus numeric'
-                }
-                return await getAllPublicReports(Number(currentPage));
+            .get('/all', async ({query:{currentPage}})=>{
+                // if (!isNumeric(currentPage))return{
+                //     'status':'failed',
+                //     'message':'Id harus numeric'
+                // }
+                return await getAllPublicReports(currentPage);
+            }, {
+                query: t.Object({
+                    currentPage: t.Optional(t.Number())
+                })
             })
             .post('/detail', async ({body:{reportId}})=>{
                 return await getReportDetail(reportId);
