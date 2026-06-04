@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index, integer, varchar, pgEnum, doublePrecision } from "drizzle-orm/pg-core";
 
 /* #region Enums */
+export const DEFAULT_REPORT_STATUS = "pending";
 export const reportStatusEnum = pgEnum("report_status_enum", [
   "pending",
   "in_progress",
@@ -168,8 +169,8 @@ export const reports = pgTable("reports", {
   locationLat: doublePrecision("location_lat").notNull(),
   locationLong: doublePrecision("location_long").notNull(),
   isPublic: boolean("is_public").notNull(),
-  isDeleted: boolean("is_deleted").notNull(),
-  likes: integer().notNull(),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  likes: integer().default(0).notNull(),
   authorId: text("author_id")
     .notNull()
     .references(() => users.id),
@@ -203,7 +204,7 @@ export const reportStatus = pgTable("report_status", {
   changedById: text("changed_by_id")
     .notNull()
     .references(() => users.id),
-  changedAt: timestamp("changed_at").notNull(),
+  changedAt: timestamp("changed_at").defaultNow(),
 });
 
 export const feedbacks = pgTable("feedbacks", {
@@ -319,6 +320,10 @@ export const penindakDetailsRelations = relations(penindakDetails, ({ one }) => 
   user: one(users, {
     fields: [penindakDetails.userId],
     references: [users.id],
+  }),
+  department: one(departments, {
+    fields: [penindakDetails.departmentId],
+    references: [departments.id],
   }),
 }));
 export const adminDetailsRelations = relations(adminDetails, ({ one }) => ({

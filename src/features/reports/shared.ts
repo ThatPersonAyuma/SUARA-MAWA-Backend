@@ -1,0 +1,1 @@
+export const REPORT_EVIDENCE_FOLDER = 'storage/report_evidances'

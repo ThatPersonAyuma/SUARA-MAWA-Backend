@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Feedback Create</title>
+</head>
+<body>
+    <h2>Create Feedback</h2>
+
+    <form id="feedbackForm">
+        <div>
+            <label>Report ID</label>
+            <input type="number" id="reportId" value="1" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Status</label>
+            <input type="text" id="status" value="approved" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Description</label>
+            <textarea id="description"></textarea>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Files</label>
+            <input type="file" id="files" multiple>
+        </div>
+
+        <br>
+
+        <button type="submit">
+            Submit
+        </button>
+    </form>
+
+    <pre id="result"></pre>
+
+    <script>
+        const form = document.getElementById("feedbackForm");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+
+            formData.append(
+                "reportId",
+                document.getElementById("reportId").value
+            );
+
+            formData.append(
+                "status",
+                document.getElementById("status").value
+            );
+
+            formData.append(
+                "description",
+                document.getElementById("description").value
+            );
+
+            const files =
+                document.getElementById("files").files;
+
+            for (const file of files) {
+                formData.append("files", file);
+                formData.append("names", file.name);
+            }
+
+            const response = await fetch(
+                "http://localhost:3000/report/feedback/create",
+                {
+                    method: "POST",
+                    headers: {
+                        // Ganti dengan token yang valid
+                        Authorization: "Bearer Sq0c2uKrcJ59VzL09uRVaGiMLQjZpQGz"
+                    },
+                    body: formData
+                }
+            );
+
+            const result = await response.text();
+
+            document.getElementById("result").textContent =
+                result;
+        });
+    </script>
+</body>
+</html>

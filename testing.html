@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Create Report</title>
+</head>
+<body>
+    <h2>Create Report Test</h2>
+
+    <form id="reportForm">
+        <div>
+            <label>Title</label><br>
+            <input type="text" name="title" value="Jalan Rusak" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Description</label><br>
+            <textarea name="description" required>Terdapat jalan rusak</textarea>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Latitude</label><br>
+            <input type="number" step="any" name="locationLat" value="-6.2" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Longitude</label><br>
+            <input type="number" step="any" name="locationLong" value="106.8" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Public</label><br>
+            <select name="isPublic">
+                <option value="true" selected>true</option>
+                <option value="false">false</option>
+            </select>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Department ID</label><br>
+            <input type="number" name="departmentId" value="1" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Category ID</label><br>
+            <input type="number" name="categoryId" value="1" required>
+        </div>
+
+        <br>
+
+        <div>
+            <label>Evidence Files</label><br>
+            <input type="file" name="files" multiple required>
+        </div>
+
+        <br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <hr>
+
+    <h3>Response</h3>
+    <pre id="result"></pre>
+
+    <script>
+        const form = document.getElementById("reportForm");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(
+                    "https://manifesto-sincere-domelike.ngrok-free.dev/mahasiswa/report/create",
+                    {
+                        method: "POST",
+                        headers: {
+                            // Ganti dengan token yang valid
+                            Authorization: "Bearer Sq0c2uKrcJ59VzL09uRVaGiMLQjZpQGz"
+                        },
+                        body: formData
+                    }
+                );
+
+                const text = await response.text();
+                console.log(response)
+                result.textContent =
+                    `Status: ${response.status}\n\n${text}`;
+            } catch (err) {
+                result.textContent = err.toString();
+            }
+        });
+    </script>
+</body>
+</html>
