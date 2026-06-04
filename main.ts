@@ -4,24 +4,34 @@ import { cors } from '@elysia/cors'
 import { fs_setup } from './src/features/filesystem/index';
 import { admin_setup } from './src/features/admin';
 import { initWhatsApp } from "./src/features/auth/whatsapp/client";
+import { reportSetup } from './src/features/reports';
+
+export const app = new Elysia();
 
 async function main() {
 
     // await initWhatsApp();
 
-    // console.log("Server started");
-    const app = new Elysia();
+    console.log("Server started");
+    app.onRequest(({ request }) => {
+        console.log(request.method, request.url);
+    });
     auth_setup(app);
+    app.onError(({ code, error }) => {
+        console.log(code);
+        console.log(error);
+    });
     app.use(
         cors({
             credentials: true,
-            origin: Bun.env.BASE_URL,
+            origin: 'http://localhost:5500',
             methods: ["GET", "POST", "PUT", "DELETE"],
             allowedHeaders: ["Content-Type", "Authorization"],
         })
     );
     fs_setup(app);
     admin_setup(app);
+    reportSetup(app);
     app.get('/', () => ({ hello: 'Bun👋' }), {
             auth:true
         })
@@ -47,6 +57,10 @@ async function main() {
         .get('/email-verified', ({})=>{
             return Bun.file('./verified.html');
         }, {
+        })
+        .get('/damn', ({set})=>{
+            set.headers["Set-Cookie"] =
+                "__Secure-better-auth.session_token=Sq0c2uKrcJ59VzL09uRVaGiMLQjZpQGz.AcZx550udZfTmgeAu8KqEQfErWzoni2aslTX8hViKog%3D; Path=/; HttpOnly; Secure; SameSite=Lax";
         })
         .listen({
             port: 3000,

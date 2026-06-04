@@ -60,7 +60,7 @@ export const auth = betterAuth({
             sendOTP: async ({ phoneNumber, code }, ctx) => {
                 // Example integration with WhatsApp API
                 console.log(code);
-                // await sendWhatsAppOTP( phoneNumber, code, );
+                await sendWhatsAppOTP( phoneNumber, code, );
                 // console.log(`https://wa.me/+6285706525584?text=Halo,%20saya%20ingin%20melakukan%20verifikasi%20nomor%20telepon.%20Kode%20OTP:%20${code}%20*Mohon%20jangan%20membagikan%20kode%20ini%20kepada%20siapa%20pun.*`)
             },
             // opt
@@ -251,19 +251,20 @@ export const auth = betterAuth({
         sendVerificationEmail: async ({ user, url, token }) => {
             // Logika pengiriman email (Gunakan Resend, Nodemailer, dll)
             // console.log(`Kirim email verifikasi ke ${user.email} dengan link: ${url} dengan token ${token}`);
-            // const { data, error } = await resend.emails.send({
-            //             from: 'noreply@update.ariear.my.id',
-            //             to: user.email, 
-            //             subject: 'Uji Coba Resend Development',
-            //             html: createHtmlEmailVerif(url, user.name)
-            //         });
-            // if (error) {
-            //     return console.error('Gagal mengirim:', error);
-            // }
             const expiresAt = new Date(
                 Date.now() + EMAIL_VERIFICATION_EXPIRES_IN * 1000
             );
-            console.log(createHtmlEmailVerif(url, user.name, expiresAt));
+            const { data, error } = await resend.emails.send({
+                        from: 'noreply@update.ariear.my.id',
+                        to: user.email, 
+                        subject: 'Uji Coba Resend Development',
+                        html: createHtmlEmailVerif(url, user.name, expiresAt)
+                    });
+            if (error) {
+                return console.error('Gagal mengirim:', error);
+            }
+            
+            // console.log(createHtmlEmailVerif(url, user.name, expiresAt));
             console.log('Url: ', url);
         },
         async beforeEmailVerification(user, request) {
