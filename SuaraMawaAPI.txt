@@ -8,10 +8,15 @@ GET http://localhost:3000/api/auth/verify-email => // Callback email verificatio
 http://localhost:3000/api/auth/phone-number/send-otp => {phoneNumber} // Belum bisa
 POST /api/auth/sign-in/social
 
-Payload:
-{
-    "provider": "google",
-    "idToken": {
-        "token": "12123123"
-    }
-}
+Reports
+POST BASE/mahasiswa/report/creat => {Lihat pada kode}, Untuk membuat laporan
+GET BASE/mahasiswa/my-reports?currentPage => Mengambil semua report yang dibuat mahasiswa
+GET BASE/report/department/all => return List entity department
+GET BASE/report/category/all => return List entity department
+GET BASE/report/status/all => return List status yang bisa ada
+GET BASE/report/all => return semua Report yang isPublic (Pagination)
+POST BASE/report/detail => {reportId: int} return detail dari report, di sini juga berisi list dari report status
+GET BASE/report/evidence/:reportEvidenceId/preview => return file berupa preview, belum tau kalau video atau file jadinya gimana
+GET BASE/report/evidence/:reportEvidenceId/download => memerintahkan browser untuk download file daripada preview
+POST BASE/report/feedback/create => {Lihat kode} untuk membuat feedback, bisa penindak bisa mahasiswa, feedback menitikberatkan perubahan status
+POST BASE/report/feedback/detail => {reportStatusId: int} return detail dari feedback, ini dibuat terpisah agar bisa hanya ditampilkan yang perlu, sisanya bisa di load nanti dengan data mengambil dari endpoint ini
