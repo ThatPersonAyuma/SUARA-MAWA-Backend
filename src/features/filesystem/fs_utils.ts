@@ -28,14 +28,27 @@ function getFileType(extension: string): FileType | null {
 }
 
 export async function storeFile(file: any, filename: string | null, prefixPath: string){
-    const extension = file.name.split('.').pop();
     if (filename==null){
         filename = file.name;
     }
+    if(filename==null)return;
+    let finalPath = filename;
+    let extIndex = file.name.lastIndexOf('.');
+    const base = extIndex !== -1 ? filename.slice(0, extIndex) : filename;
+    const ext = extIndex !== -1 ? filename.slice(extIndex) : '';
     try{
+        // check if exist
+        let counter = 1;
+        
+        // Loop to find a filename that doesn't exist yet
+        while (await file.exists()) {
+            finalPath = `${base} (${counter})${ext}`;
+            file = Bun.file(finalPath);
+            counter++;
+        }
         const bytesWritten = await Bun.write(`${prefixPath}/${filename}`, file);
         if (bytesWritten === file.size) {
-            const fileType = getFileType(extension);
+            const fileType = getFileType(ext);
             if (fileType==null)return null;
             const res = await db.insert(files)
                 .values({

@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { createReport, getMyReports } from "./mahasiswa";
-import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getReportDetail, getReportEvidences, getReportFeedback } from "./all";
+import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getFeedbackAttachment, getReportDetail, getReportEvidences, getReportFeedback } from "./all";
 import { isNumeric } from "../shared";
 
 
@@ -39,14 +39,6 @@ export function reportSetup(app: Elysia){
                 }),
         })
         .get('/my-reports', async ({query:{currentPage}, user})=>{
-            // if (currentPage==null)return{
-            //     'status':'failed',
-            //     'message':'Current Page tidak ada'
-            // };
-            // if (!isNumeric(currentPage))return{
-            //     'status':'failed',
-            //     'message':'Current Page harus numeric'
-            // }
             return await getMyReports(user.id, currentPage);
         },{
             query: t.Object({
@@ -121,7 +113,6 @@ export function reportSetup(app: Elysia){
                 const res = await getReportEvidences(id);
                 
                 if (res['status']=='success'){
-                    console.log("runned");
                     set.headers[
                         "Content-Disposition"
                     ] = `attachment; filename="${res['data']!.name}"`;
@@ -130,8 +121,8 @@ export function reportSetup(app: Elysia){
                     return res;
                 }
             },)
-            .group('/feedback', ()=>
-                app
+            .group('/feedback', (feedbackApp)=>
+                feedbackApp
                 .post('/create', ({body:{ reportId, status, description, files, names,}, user})=>{
                     return createFeedback(user.id, reportId, status, description, files, names);
                 },{
@@ -150,6 +141,48 @@ export function reportSetup(app: Elysia){
                         reportStatusId: t.Number()
                     })
                 })
+                .get("/:feedbackAttachmentId/preview", async ({ params: {feedbackAttachmentId}, set })=>{
+                    if (feedbackAttachmentId==null)return{
+                        'status':'failed',
+                        'message':'Id tidak ada'
+                    };
+                    if (!isNumeric(feedbackAttachmentId))return{
+                        'status':'failed',
+                        'message':'Id harus numeric'
+                    }
+                    const id = Number(feedbackAttachmentId);
+                    
+                    set.headers["Content-Disposition"] = "inline";
+                    
+                    const res = await getFeedbackAttachment(id)
+                    if(res['status']=='success'){
+                        return res['data'];
+                    }else{
+                        return res;
+                    }
+                },)
+                .get("/:feedbackAttachmentId/download", async ({ params: {feedbackAttachmentId}, set })=>{
+                    if (feedbackAttachmentId==null)return{
+                        'status':'failed',
+                        'message':'ID tidak ada'
+                    };
+                    if (!isNumeric(feedbackAttachmentId))return{
+                        'status':'failed',
+                        'message':'Id harus numeric'
+                    }
+                    const id = Number(feedbackAttachmentId);
+                    
+                    const res = await getFeedbackAttachment(id);
+                    
+                    if (res['status']=='success'){
+                        set.headers[
+                            "Content-Disposition"
+                        ] = `attachment; filename="${res['data']!.name}"`;
+                        return res['data']!;
+                    }else{
+                        return res;
+                    }
+                },)
             )
         ;
     })

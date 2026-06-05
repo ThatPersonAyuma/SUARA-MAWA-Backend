@@ -4,9 +4,7 @@ import { categories, departments, feedbackAttachments, feedbacks, reportEvidence
 import { PAGE_SIZE } from "../shared";
 import { reportSetup } from ".";
 import { getFile, storeFile } from "../filesystem/fs_utils";
-import { REPORT_EVIDENCE_FOLDER } from "./shared";
-
-const FEEDBACK_ATTACHMENT_FOLDER = "storage/feedback_attachments";
+import { REPORT_EVIDENCE_FOLDER, FEEDBACK_ATTACHMENT_FOLDER } from "./shared";
 
 export async function getAllPublicReports(currentPage: number = 1){
     const offset = (currentPage - 1) * PAGE_SIZE;
@@ -209,6 +207,30 @@ export async function createFeedback(userId: string, reportId: number, status: s
             'message':'Berhasil memberikan feedback'
         }
     }
+}
+
+export async function getFeedbackAttachment(feedbackAttachmentId: number) {
+    const res = await db.query.feedbackAttachments.findFirst({
+        where: eq(feedbackAttachments.id, feedbackAttachmentId),
+        with: {
+            file: {
+                columns:{
+                    name: true
+                }
+            }
+        },
+        columns: {
+            fileId: true
+        }
+    });
+    if (res==null)return{
+        'status': 'failed',
+        'message':'reportEvidenceTidakDitemukan'
+    };
+    return {
+        'status':'success',
+        'data' : await getFile(`${FEEDBACK_ATTACHMENT_FOLDER}/${res.file.name}`)
+    };
 }
 
 export async function getAllReportStatus(){

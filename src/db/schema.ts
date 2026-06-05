@@ -146,6 +146,7 @@ export const adminDetails = pgTable("admin_details", {
     .notNull()
     .unique()
     .references(() => users.id),
+  nik: varchar({ length: 255 }).notNull().unique(),
 });
 
 export const penindakDetails = pgTable("penindak_details", {
@@ -213,7 +214,7 @@ export const feedbacks = pgTable("feedbacks", {
     .notNull()
     .references(() => reportStatus.id)
     .unique(),
-  description: text(),
+  description: text().notNull(),
 });
 
 export const feedbackAttachments = pgTable("feedback_attachments", {
@@ -238,6 +239,7 @@ export const comments = pgTable("comments", {
     .notNull()
     .references(() => users.id),
   comment: text().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 /* #endregion */
 
