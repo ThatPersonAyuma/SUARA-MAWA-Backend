@@ -58,7 +58,7 @@ async function main() {
             return Bun.file('./verified.html');
         }, {
         })
-        .get('/damn', ({set})=>{
+        .get('/set-cookie', ({set})=>{
             set.headers["Set-Cookie"] =
                 "__Secure-better-auth.session_token=Sq0c2uKrcJ59VzL09uRVaGiMLQjZpQGz.AcZx550udZfTmgeAu8KqEQfErWzoni2aslTX8hViKog%3D; Path=/; HttpOnly; Secure; SameSite=Lax";
         })

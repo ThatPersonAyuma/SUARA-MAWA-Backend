@@ -99,6 +99,8 @@ export function auth_setup(app: Elysia){
                                 });
                             }
                             break;
+                        case "ADMIN":
+                            break;
                         default:
                             throw status(401, {
                                 code: "INVALID_USER_ROLE",
