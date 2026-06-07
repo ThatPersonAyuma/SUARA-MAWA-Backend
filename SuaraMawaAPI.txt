@@ -7,6 +7,7 @@ http://localhost:3000/api/auth/callback/google => // Callback google
 GET http://localhost:3000/api/auth/verify-email => // Callback email verification
 http://localhost:3000/api/auth/phone-number/send-otp => {phoneNumber} // Belum bisa
 POST /api/auth/sign-in/social
+GET BASE/user/me => return data user yang sedang login beserta detail berdasarkan role-nya
 
 Reports
 POST BASE/mahasiswa/report/creat => {Lihat pada kode}, Untuk membuat laporan
@@ -15,6 +16,7 @@ GET BASE/report/department/all => return List entity department
 GET BASE/report/category/all => return List entity department
 GET BASE/report/status/all => return List status yang bisa ada
 GET BASE/report/all => return semua Report yang isPublic (Pagination)
+GET BASE/report/filter?departmentId=&status=&currentPage= => return semua Report berdasarkan departmentId dan status terakhir (Pagination)
 POST BASE/report/detail => {reportId: int} return detail dari report, di sini juga berisi list dari report status
 GET BASE/report/evidence/:reportEvidenceId/preview => return file berupa preview, belum tau kalau video atau file jadinya gimana
 GET BASE/report/evidence/:reportEvidenceId/download => memerintahkan browser untuk download file daripada preview

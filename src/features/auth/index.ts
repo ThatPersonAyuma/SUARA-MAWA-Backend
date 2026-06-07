@@ -5,43 +5,44 @@ import Elysia, { redirect, status, t } from 'elysia';
 import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
 
-function on_boarding_page(){
+function on_boarding_page() {
     const onBoarding = new Elysia();
 }
 
-enum Stage{
-    Login="Login",
-    emailVerification="Email Verification",
-    Password="Password",
-    phoneNumberVerification="Phone Number Verification"
+enum Stage {
+    Login = "Login",
+    emailVerification = "Email Verification",
+    Password = "Password",
+    phoneNumberVerification = "Phone Number Verification"
 }
 
 interface CheckLogin {
-    status: "Success"|"Failed",
+    status: "Success" | "Failed",
     onStage: Stage,
     message: String
 }
 
 function isValidIndonesianPhoneNumber(phone: string): boolean {
-  // 1. Remove all spaces, dashes, and parentheses to sanitize input
-  const sanitizedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    // 1. Remove all spaces, dashes, and parentheses to sanitize input
+    const sanitizedPhone = phone.replace(/[\s\-\(\)]/g, '');
 
-  // 2. Indonesian Phone Number Regex
-  // - ^(\+62|62|0) : Starts with +62, 62, or 0
-  // - 8           : Followed by 8 (standard for Indonesian mobile)
-  // - [1-9]       : Valid operator prefix (e.g., 81, 82, 85, etc.)
-  // - [0-9]{7,11} : Followed by 7 to 11 digits (total length of 10-14 digits)
-  const idPhoneRegex = /^(\+62|62|0)8[1-9][0-9]{7,11}$/;
+    // 2. Indonesian Phone Number Regex
+    // - ^(\+62|62|0) : Starts with +62, 62, or 0
+    // - 8           : Followed by 8 (standard for Indonesian mobile)
+    // - [1-9]       : Valid operator prefix (e.g., 81, 82, 85, etc.)
+    // - [0-9]{7,11} : Followed by 7 to 11 digits (total length of 10-14 digits)
+    const idPhoneRegex = /^(\+62|62|0)8[1-9][0-9]{7,11}$/;
 
-  return idPhoneRegex.test(sanitizedPhone);
+    return idPhoneRegex.test(sanitizedPhone);
 }
 
 
-export function auth_setup(app: Elysia){
-    const betterAuth = new Elysia({name: 'better-auth',
+export function auth_setup(app: Elysia) {
+    const betterAuth = new Elysia({
+        name: 'better-auth',
         cookie: {
-        // WAJIB: Samakan dengan BETTER_AUTH_SECRET di .env kamu
-            secrets: process.env.BETTER_AUTH_SECRET 
+            // WAJIB: Samakan dengan BETTER_AUTH_SECRET di .env kamu
+            secrets: process.env.BETTER_AUTH_SECRET
         }
     })
         .mount(auth.handler)
@@ -57,33 +58,33 @@ export function auth_setup(app: Elysia){
                         message: "Invalid session",
                     });
                     const user = await db.query.users.findFirst({
-                                where: eq(users.email, session.user.email), // Filter user condition
-                                with: {
-                                    userRole: {
-                                        where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
-                                        columns: { name: true }, // Select specific fields in the relation
-                                    },
-                                },
-                                columns: {
-                                    id: true, // Select specific user fields
-                                    name: true,
-                                    email: true,
-                                    photoProfileId: true,
-                                    emailVerified: true,
-                                    phoneNumber: true,
-                                    phoneNumberVerified: true,
-                                },
-                            });
-                    if (!user?.emailVerified){
+                        where: eq(users.email, session.user.email), // Filter user condition
+                        with: {
+                            userRole: {
+                                where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
+                                columns: { name: true }, // Select specific fields in the relation
+                            },
+                        },
+                        columns: {
+                            id: true, // Select specific user fields
+                            name: true,
+                            email: true,
+                            photoProfileId: true,
+                            emailVerified: true,
+                            phoneNumber: true,
+                            phoneNumberVerified: true,
+                        },
+                    });
+                    if (!user?.emailVerified) {
                         throw status(401, {
                             code: "EMAIL_NOT_VERIFIED",
                             message: "Silakan verifikasi email terlebih dahulu",
                         });
                     }
-                    switch (user?.userRole.name){
+                    switch (user?.userRole.name) {
                         case "MAHASISWA":
                             const res = await checkMahasiswaDetail(user.id);
-                            if (!res){
+                            if (!res) {
                                 throw status(401, {
                                     code: "EMPTY_MAHASISWA_DETAIL",
                                     message: "Silakan isi detail mahasiswa",
@@ -92,7 +93,7 @@ export function auth_setup(app: Elysia){
                             break;
                         case "PENINDAK":
                             const penindak_res = await checkPenindakDetail(user.id)
-                            if (!penindak_res){
+                            if (!penindak_res) {
                                 throw status(401, {
                                     code: "EMPTY_PENINDAK_DETAIL",
                                     message: "Silakan isi detail penindak",
@@ -107,17 +108,17 @@ export function auth_setup(app: Elysia){
                                 message: "This email domain is not permitted for registration.",
                             });
                     }
-                    if(user.phoneNumber == null){
+                    if (user.phoneNumber == null) {
                         throw status(401, {
-                                code: "EMPTY_PHONE_NUMBER",
-                                message: "Silakan verifikasi nomor telepon anda",
-                            });
-                    }
-                    if(!user.phoneNumberVerified){
-                        throw status(401, {
-                                code: "UNVERIFIED_PHONE_NUMBER",
+                            code: "EMPTY_PHONE_NUMBER",
                             message: "Silakan verifikasi nomor telepon anda",
-                            });
+                        });
+                    }
+                    if (!user.phoneNumberVerified) {
+                        throw status(401, {
+                            code: "UNVERIFIED_PHONE_NUMBER",
+                            message: "Silakan verifikasi nomor telepon anda",
+                        });
                     }
                     return {
                         user: user,
@@ -135,23 +136,23 @@ export function auth_setup(app: Elysia){
                         message: "User Not Found",
                     });
                     const user = await db.query.users.findFirst({
-                                where: eq(users.email, session.user.email), // Filter user condition
-                                with: {
-                                    userRole: {
-                                        where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
-                                        columns: { name: true }, // Select specific fields in the relation
-                                    },
-                                },
-                                columns: {
-                                    id: true, // Select specific user fields
-                                    name: true,
-                                    email: true,
-                                    photoProfileId: true,
-                                    emailVerified: true,
-                                    phoneNumber: true,
-                                    phoneNumberVerified: true,
-                                },
-                            });
+                        where: eq(users.email, session.user.email), // Filter user condition
+                        with: {
+                            userRole: {
+                                where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
+                                columns: { name: true }, // Select specific fields in the relation
+                            },
+                        },
+                        columns: {
+                            id: true, // Select specific user fields
+                            name: true,
+                            email: true,
+                            photoProfileId: true,
+                            emailVerified: true,
+                            phoneNumber: true,
+                            phoneNumberVerified: true,
+                        },
+                    });
                     return {
                         user: user,
                         session: session.session
@@ -160,7 +161,7 @@ export function auth_setup(app: Elysia){
             }
         });
     app.use(betterAuth)
-        .get("/api/auth/sign-up/google", async ({ redirect, query: {callback} }) => {
+        .get("/api/auth/sign-up/google", async ({ redirect, query: { callback } }) => {
             // 1. Ambil callback dinamis dari query parameter (jika ada)
             // Jika dari Android, nanti URL-nya akan menjadi: /login/oauth?callback=myapp://oauth-callback
             const targetCallback = callback || 'suaramawa://sign-in/google/success';//"https://manifesto-sincere-domelike.ngrok-free.dev/sign-in/google/success";
@@ -170,7 +171,7 @@ export function auth_setup(app: Elysia){
                 const res = await auth.api.signInSocial({
                     body: {
                         provider: "google",
-                        callbackURL: targetCallback, 
+                        callbackURL: targetCallback,
                         errorCallbackURL: "http://localhost:3000/error"
                     },
                 });
@@ -184,7 +185,7 @@ export function auth_setup(app: Elysia){
                     success: false,
                     message: "Gagal menginisialisasi OAuth Google"
                 };
-                
+
             } catch (error) {
                 return {
                     success: false,
@@ -192,31 +193,69 @@ export function auth_setup(app: Elysia){
                     error: error instanceof Error ? error.message : String(error)
                 };
             }
-        },{
+        }, {
             query: t.Object({
                 callback: t.Optional(t.String())
             })
         })
         .group('/user', (app) => app
-            .get("/get-data", async ({ request, user })=>{
+            .get("/get-data", async ({ request, user }) => {
                 return user;
-            },{
+            }, {
                 onboardAuth: true
             })
-            .get("/check", async ({ request, user })=>{
-            },{
+            .get("/me", async ({ user }) => {
+                const userDetails = await db.query.users.findFirst({
+                    where: eq(users.id, user.id),
+                    with: {
+                        userRole: true,
+                        photoProfile: true,
+                        mahasiswaDetails: true,
+                        adminDetails: true,
+                        penindakDetails: {
+                            with: {
+                                department: true
+                            }
+                        }
+                    }
+                });
+
+                if (!userDetails) {
+                    return status(404, { message: "User not found" });
+                }
+
+                const { mahasiswaDetails, adminDetails, penindakDetails, ...rest } = userDetails;
+                let roleDetails = null;
+
+                if (userDetails.userRole.name === 'MAHASISWA') {
+                    roleDetails = mahasiswaDetails;
+                } else if (userDetails.userRole.name === 'ADMIN') {
+                    roleDetails = adminDetails;
+                } else if (userDetails.userRole.name === 'PENINDAK') {
+                    roleDetails = penindakDetails;
+                }
+
+                return {
+                    ...rest,
+                    roleDetails
+                };
+            }, {
                 auth: true
             })
-            .get("/mahasiswa-detail", async ({ user })=>{
-                try{
+            .get("/check", async ({ request, user }) => {
+            }, {
+                auth: true
+            })
+            .get("/mahasiswa-detail", async ({ user }) => {
+                try {
                     const result = await db.query.mahasiswaDetails.findFirst({
-                            where: eq(mahasiswaDetails.userId, user.id)
-                        });
+                        where: eq(mahasiswaDetails.userId, user.id)
+                    });
                     return status(200, {
-                        "status": result!=null ? "success":"failed",
+                        "status": result != null ? "success" : "failed",
                         "data": result
                     });
-                }catch(e){
+                } catch (e) {
                     throw status(500, {
                         'message': e
                     });
@@ -224,32 +263,32 @@ export function auth_setup(app: Elysia){
             }, {
                 onboardAuth: true
             })
-            .post("/mahasiswa-detail", async ({ body: { nim }, user })=>{
-                try{
+            .post("/mahasiswa-detail", async ({ body: { nim }, user }) => {
+                try {
                     await db.insert(mahasiswaDetails)
-                        .values({userId: user.id, nim: nim})
+                        .values({ userId: user.id, nim: nim })
                         .onConflictDoUpdate({
                             target: mahasiswaDetails.userId,
-                            set: {nim: nim}
+                            set: { nim: nim }
                         })
                     return status(200, {
                         'message': 'Success'
                     });
-                }catch(e){
+                } catch (e) {
                     throw status(500, {
                         'message': e
                     });
                 }
-            },{
+            }, {
                 body: t.Object({
                     nim: t.String()
                 }),
-                onboardAuth:true
+                onboardAuth: true
             })
-            .post("/phone-number", async ({ body: { phoneNumber }, user })=>{
-                try{
+            .post("/phone-number", async ({ body: { phoneNumber }, user }) => {
+                try {
                     const isValid = isValidIndonesianPhoneNumber(phoneNumber);
-                    if (!isValid){
+                    if (!isValid) {
                         return status(400, {
                             'message': 'Nomor telepon tidak valid.'
                         })
@@ -259,23 +298,23 @@ export function auth_setup(app: Elysia){
                             phoneNumber: phoneNumber
                         })
                         .where(eq(users.id, user.id));
-                    return status(200,{
+                    return status(200, {
                         'message': 'success'
                     });
-                }catch(e){
+                } catch (e) {
                     throw status(500, {
                         'message': e
                     });
                 }
-            },{
+            }, {
                 body: t.Object({
                     phoneNumber: t.String()
                 }),
-                onboardAuth:true
+                onboardAuth: true
             })
-            .get("/phone-number/send-otp", async ({ user })=>{
-                try{
-                    if (user?.phoneNumber==null){
+            .get("/phone-number/send-otp", async ({ user }) => {
+                try {
+                    if (user?.phoneNumber == null) {
                         return status(400);
                     }
                     const data = await auth.api.sendPhoneNumberOTP({
@@ -285,13 +324,13 @@ export function auth_setup(app: Elysia){
                     });
                     console.log(data);
                     return status(200, data);
-                }catch(e){
+                } catch (e) {
                     throw status(500, {
                         'message': e
                     });
                 }
-            },{
-                onboardAuth:true
+            }, {
+                onboardAuth: true
             })
         )
         // .get("/check/phone/is_verified", async ({ request, user })=>{
@@ -308,14 +347,14 @@ export function auth_setup(app: Elysia){
         // },{
         //     auth: true
         // })
-        .get("/error", ({query:{ error }})=>{
+        .get("/error", ({ query: { error } }) => {
             return {
                 error: error
             }
         },
-        {
-            query: t.Object({
-                error: t.String()
-            })
-        });
+            {
+                query: t.Object({
+                    error: t.String()
+                })
+            });
 }
