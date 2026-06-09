@@ -56,7 +56,8 @@ export async function getReportDetail(reportId: number) {
         with: {
             author: {
                 columns: {
-                    name: true
+                    name: true,
+                    photoProfileId: true
                 }
             },
             department: {
@@ -80,14 +81,57 @@ export async function getReportDetail(reportId: number) {
             reportStatus: {
                 columns: {
                     id: true,
-                    status: true
+                    status: true,
+                    changedAt: true
                 },
+                with: {
+                    changedById: {
+                        columns: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                }
             }
         }
-    })
+    });
+
+    if (!res) {
+        return {
+            'status': 'failed',
+            'message': 'Report not found'
+        };
+    }
+
+    // Sort reportStatus by changedAt ascending to find the earliest date
+    const sortedStatuses = [...res.reportStatus].sort((a, b) => {
+        const dateA = a.changedAt ? new Date(a.changedAt).getTime() : 0;
+        const dateB = b.changedAt ? new Date(b.changedAt).getTime() : 0;
+        return dateA - dateB;
+    });
+
+    const reportDate = sortedStatuses.length > 0 ? sortedStatuses[0].changedAt : null;
+
+    const mappedReportStatus = res.reportStatus.map(status => ({
+        id: status.id,
+        status: status.status,
+        created_at: status.changedAt,
+        author: status.changedById
+    }));
+
+    const mappedData = {
+        ...res,
+        author: {
+            ...res.author,
+            url_foto_profil: res.author.photoProfileId ? `/users/${encodeURIComponent(res.author.name)}/profile/photo` : null
+        },
+        report_date: reportDate,
+        reportStatus: mappedReportStatus
+    };
+
     return {
         'status': 'success',
-        'data': res
+        'data': mappedData
     };
 }
 
