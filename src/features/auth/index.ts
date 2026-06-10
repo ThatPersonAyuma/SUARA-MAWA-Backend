@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/db_index';
-import { mahasiswaDetails, userRoles, users } from '../../db/schema';
+import { adminDetails, mahasiswaDetails, penindakDetails, userRoles, users } from '../../db/schema';
 import Elysia, { redirect, status, t } from 'elysia';
 import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
@@ -204,6 +204,57 @@ export function auth_setup(app: Elysia){
                 onboardAuth: true
             })
             .get("/check", async ({ request, user })=>{
+                let temp;
+                switch(user!.userRole.name){
+                    case "MAHASISWA":
+                        temp = {
+                            'mahasiswaDetail':{
+                                'nim': (await db.query.mahasiswaDetails.findFirst({
+                                    where: eq(mahasiswaDetails.userId, user.id)
+                                }))?.nim
+                            }
+                        };
+                        break;
+                    case "PENINDAK":
+                        const data = (await db.query.penindakDetails.findFirst({
+                                    where: eq(penindakDetails.userId, user.id),
+                                    with: {
+                                        department: {
+                                            columns: {
+                                                name: true
+                                            }
+                                        }
+                                    },
+                                    columns: {
+                                        nik: true
+                                    }
+                                }))
+                        temp = {
+                            'penindakDetail':{
+                                'nik': data?.nik,
+                                'department': data?.department.name
+                            }
+                        };
+                        break;
+                    case "ADMIN":
+                        temp = {
+                            'mahasiswaDetail':{
+                                'nik': (await db.query.adminDetails.findFirst({
+                                    where: eq(adminDetails.userId, user.id),
+                                    columns: {
+                                        nik: true
+                                    }
+                                }))?.nik
+                            }
+                        };
+                        break;
+                    default:
+                        break 
+                }
+                return {
+                    ...user,
+                    ...temp
+                };
             },{
                 auth: true
             })

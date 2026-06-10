@@ -3,3 +3,4 @@
 .env.local
 node_modules/
 baileys_auth/
+suramawa-firebase-adminsdk.json

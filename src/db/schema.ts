@@ -131,6 +131,15 @@ export const jwks = pgTable("jwks", {
   expiresAt: timestamp("expires_at"),
 });
 
+export const firebaseTokens = pgTable("firebase_tokens", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  token: text('token').unique().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const mahasiswaDetails = pgTable("mahasiswa_details", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: text("user_id")
@@ -147,6 +156,7 @@ export const adminDetails = pgTable("admin_details", {
     .unique()
     .references(() => users.id),
   nik: varchar({ length: 255 }).notNull().unique(),
+  nip: varchar({ length: 255 }).notNull().unique(),
 });
 
 export const penindakDetails = pgTable("penindak_details", {
@@ -159,6 +169,7 @@ export const penindakDetails = pgTable("penindak_details", {
     .notNull()
     .references(() => departments.id),
   nik: varchar({ length: 255 }).notNull().unique(),
+  nip: varchar({ length: 255 }).notNull().unique(),
 });
 /* #endregion */
 
@@ -167,6 +178,7 @@ export const reports = pgTable("reports", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   title: varchar({ length: 255 }).notNull(),
   description: text().notNull(),
+  location: varchar({ length: 255 }).notNull(),
   locationLat: doublePrecision("location_lat").notNull(),
   locationLong: doublePrecision("location_long").notNull(),
   isPublic: boolean("is_public").notNull(),
@@ -258,6 +270,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.photoProfileId],
     references: [files.id],
   }),
+  firebaseToken: one(firebaseTokens, {
+    fields: [users.id],
+    references: [firebaseTokens.userId]
+  }),
 
   // Relasi One-to-Many & One-to-One pendukung
   mahasiswaDetails: one(mahasiswaDetails),
@@ -268,10 +284,17 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   comments: many(comments),
   changedStatuses: many(reportStatus),
 }));
+
 /* #endregion */
 
 export const userRolesRelationship = relations(userRoles, ({ many }) => ({
   users: many(users)
+}));
+export const firebaseTokensRelations = relations(firebaseTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [firebaseTokens.userId],
+    references: [users.id] 
+  })
 }));
 /* #endregion */
 
