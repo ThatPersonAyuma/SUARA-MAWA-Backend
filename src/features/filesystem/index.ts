@@ -1,7 +1,6 @@
 import { Elysia, t } from "elysia";
 import { getPhotoProfile, storePhotoProfile } from "./fs";
 
-
 export function fs_setup(app: Elysia){
     app.get("/users/:name/profile/photo", async ({ params: { name }, user })=> {
             return await getPhotoProfile(name);
