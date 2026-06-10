@@ -5,6 +5,8 @@ import { fs_setup } from './src/features/filesystem/index';
 import { admin_setup } from './src/features/admin';
 import { initWhatsApp } from "./src/features/auth/whatsapp/client";
 import { reportSetup } from './src/features/reports';
+import { messaging } from './src/features/firebase/firebase';
+import { firebaseSetup } from './src/features/firebase';
 
 export const app = new Elysia();
 
@@ -32,6 +34,7 @@ async function main() {
     fs_setup(app);
     admin_setup(app);
     reportSetup(app);
+    firebaseSetup(app);
     app.get('/', () => ({ hello: 'Bun👋' }), {
             auth:true
         })
@@ -45,6 +48,9 @@ async function main() {
             onboardAuth: true
         }
         )
+        .get('/send', ({query: {cookie}})=>{
+            console.log(cookie)
+        })
         .get('/logo', ()=>{
             return file('storage/logo.png');
         })

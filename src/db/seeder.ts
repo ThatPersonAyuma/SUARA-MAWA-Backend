@@ -154,6 +154,7 @@ async function seed() {
         {
             userId: admin.id,
             nik: "182212312024003",
+            nip: "122333442"
         },
     ]).onConflictDoNothing();
 
@@ -169,6 +170,7 @@ async function seed() {
             userId: penindak.id,
             nik: "198812312024001",
             departmentId: kemahasiswaan.id,
+            nip: "12322132"
         },
     ]).onConflictDoNothing();
 
@@ -182,6 +184,7 @@ async function seed() {
             title: "Lampu Gedung Rusak",
             description:
                 "Lampu di koridor gedung A mati selama beberapa hari.",
+            location: "Kelas A lantai 2 Gedung utama",
             locationLat: -7.2575,
             locationLong: 112.7521,
             isPublic: true,
@@ -195,6 +198,7 @@ async function seed() {
             title: "Perubahan Jadwal Kuliah Mendadak",
             description:
                 "Jadwal kuliah berubah tanpa pemberitahuan yang jelas.",
+            location: "Mata kuliah Pembelajaran Mesin",
             locationLat: -7.2570,
             locationLong: 112.7520,
             isPublic: true,
