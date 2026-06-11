@@ -1,7 +1,7 @@
 import { db } from "../../db/db_index";
 import { categories, DEFAULT_REPORT_STATUS, departments, reportEvidences, reports, reportStatus, reportStatusEnum, users } from "../../db/schema";
 import { storeFile } from "../filesystem/fs_utils";
-import { asc, eq, and } from 'drizzle-orm';
+import { asc, eq, and, sql } from 'drizzle-orm';
 import { PAGE_SIZE } from "../shared";
 import { REPORT_EVIDENCE_FOLDER } from "./shared";
 
@@ -78,7 +78,11 @@ export async function createReport(
 }
 
 export async function getMyReports(userId: string, currentPage: number = 1) {
-    const all_reports = db.select({
+    const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
+    const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
+    const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
+
+    const all_reports = await db.select({
         id: reports.id,
         title: reports.title,
         description: reports.description,
@@ -86,7 +90,10 @@ export async function getMyReports(userId: string, currentPage: number = 1) {
         likes: reports.likes,
         authorName: users.name,
         departmentName: departments.name,
-        categoriesName: categories.name
+        categoriesName: categories.name,
+        latestStatus: sql<string>`${latestStatusQuery}`.as('latestStatus'),
+        thumbnail: sql<number>`${thumbnailQuery}`.as('thumbnail'),
+        createdAt: sql<Date>`${createdAtQuery}`.as('createdAt')
     })
         .from(reports)
         .innerJoin(users, eq(users.id, reports.authorId))
@@ -99,6 +106,10 @@ export async function getMyReports(userId: string, currentPage: number = 1) {
         ))
         .limit(PAGE_SIZE)
         .offset((currentPage - 1) * PAGE_SIZE);
-    return all_reports;
+
+    return all_reports.map(report => ({
+        ...report,
+        thumbnail: report.thumbnail ? `/report/evidence/${report.thumbnail}/preview` : null
+    }));
 }
 
