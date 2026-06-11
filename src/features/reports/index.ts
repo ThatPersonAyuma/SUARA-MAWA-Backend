@@ -134,15 +134,36 @@ export function reportSetup(app: Elysia) {
                     },)
                     .group('/feedback', (feedbackApp) =>
                         feedbackApp
-                            .post('/create', ({ body: { reportId, status, description, files, names, }, user }) => {
-                                return createFeedback(user.id, reportId, status, description, files, names);
+                            .post('/create', ({ body, user }) => {
+                                const filesArray = Array.isArray(body.files)
+                                    ? body.files
+                                    : (body.files ? [body.files] : null);
+
+                                const namesArray = Array.isArray(body.names)
+                                    ? body.names
+                                    : (body.names ? [body.names] : null);
+
+                                return createFeedback(
+                                    user.id,
+                                    body.reportId,
+                                    body.status,
+                                    body.description,
+                                    filesArray as File[] | null,
+                                    namesArray as string[] | null
+                                );
                             }, {
                                 body: t.Object({
-                                    reportId: t.Number(),
+                                    reportId: t.Numeric(),
                                     status: t.String(),
                                     description: t.String(),
-                                    files: t.Nullable(t.Array(t.File())),
-                                    names: t.Nullable(t.Array(t.Nullable(t.String())))
+                                    files: t.Optional(t.Nullable(t.Union([
+                                        t.Array(t.File()),
+                                        t.File()
+                                    ]))),
+                                    names: t.Optional(t.Nullable(t.Union([
+                                        t.Array(t.String()),
+                                        t.String()
+                                    ])))
                                 })
                             })
                             .post('/detail', ({ body: { reportStatusId } }) => {

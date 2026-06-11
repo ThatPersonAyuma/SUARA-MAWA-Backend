@@ -18,7 +18,7 @@ const documentExtensions = [
 ];
 
 function getFileType(extension: string): FileType | null {
-    extension = extension.toLowerCase();
+    extension = extension.replace(/^\./, '').toLowerCase();
 
     if (imageExtensions.includes(extension)) return "image";
     if (videoExtensions.includes(extension)) return "video";
@@ -27,55 +27,58 @@ function getFileType(extension: string): FileType | null {
     return null;
 }
 
-export async function storeFile(file: any, filename: string | null, prefixPath: string){
-    if (filename==null){
-        filename = file.name;
+export async function storeFile(uploadedFile: File | any, filename: string | null, prefixPath: string) {
+    if (filename == null) {
+        filename = uploadedFile.name;
     }
-    if(filename==null)return;
+    if (filename == null) return null;
+
     let finalPath = filename;
-    let extIndex = file.name.lastIndexOf('.');
+    let extIndex = filename.lastIndexOf('.');
     const base = extIndex !== -1 ? filename.slice(0, extIndex) : filename;
     const ext = extIndex !== -1 ? filename.slice(extIndex) : '';
-    try{
-        // check if exist
+
+    try {
         let counter = 1;
-        
-        // Loop to find a filename that doesn't exist yet
-        while (await file.exists()) {
+
+        while (await Bun.file(`${prefixPath}/${finalPath}`).exists()) {
             finalPath = `${base} (${counter})${ext}`;
-            file = Bun.file(finalPath);
             counter++;
         }
-        const bytesWritten = await Bun.write(`${prefixPath}/${filename}`, file);
-        if (bytesWritten === file.size) {
+
+        const bytesWritten = await Bun.write(`${prefixPath}/${finalPath}`, uploadedFile);
+
+        if (bytesWritten === uploadedFile.size) {
             const fileType = getFileType(ext);
-            if (fileType==null)return null;
+            if (fileType == null) return null;
+
             const res = await db.insert(files)
                 .values({
-                    name: filename!,
+                    name: finalPath,
                     filetype: fileType
-                }).returning({insertedFileId: files.id});
-            if (res[0]==null){
+                }).returning({ insertedFileId: files.id });
+
+            if (res[0] == null) {
                 return null;
-            }else{
+            } else {
                 return res[0].insertedFileId;
             }
         } else {
             console.warn("Write may have been incomplete.");
             return null;
         }
-    }catch(e){
-        console.log(e);
+    } catch (e) {
+        console.log("Error writing file:", e);
         return null;
     }
 }
 
-export async function deleteFile(filename: string, prefixPath: string){
+export async function deleteFile(filename: string, prefixPath: string) {
     const file = Bun.file(`${prefixPath}/${filename}`);
     if (await file.exists()) {
         await file.delete();
         return true;
-    }else {
+    } else {
         return false;
     }
 }
