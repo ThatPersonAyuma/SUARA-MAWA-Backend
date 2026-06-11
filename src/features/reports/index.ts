@@ -13,7 +13,7 @@ export function reportSetup(app: Elysia) {
             myApp.post("/report/create", async ({ body: { title, description, locationLat,
                 locationLong, locationDetail, isPublic, departmentId, categoryId, files, names },
                 user }) => {
-                createReport(
+                return await createReport(
                     user.id,
                     title,
                     description,
@@ -23,9 +23,9 @@ export function reportSetup(app: Elysia) {
                     isPublic,
                     departmentId,
                     categoryId,
-                    files,
-                    names
-                )
+                    files ?? [],
+                    names ?? []
+                );
             }, {
                 body: t.Object({
                     title: t.String(),
@@ -36,8 +36,8 @@ export function reportSetup(app: Elysia) {
                     isPublic: t.BooleanString(),
                     departmentId: t.Numeric(),
                     categoryId: t.Numeric(),
-                    files: t.Files(),
-                    names: t.Array(t.Nullable(t.String())),
+                    files: t.Optional(t.Files()),
+                    names: t.Optional(t.Array(t.Nullable(t.String()))),
                 }),
             })
                 .get('/my-reports', async ({ query: { currentPage }, user }) => {

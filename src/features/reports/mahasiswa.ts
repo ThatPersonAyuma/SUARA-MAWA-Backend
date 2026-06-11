@@ -32,6 +32,7 @@ export async function createReport(
                 departmentId: departmentId,
                 title: title,
                 description: description,
+                location: locationDetail || "GPS Location",
                 locationLat: locationLat,
                 locationLong: locationLong,
                 locationDetail: locationDetail,
