@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Berhasil Direset - Suara Mawa</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Inter, Arial, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    background: #f5f7fb;
+}
+
+.container {
+    width: 100%;
+    max-width: 460px;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+
+.logo {
+    width: 100px;
+    margin-bottom: 24px;
+}
+
+.icon-wrapper {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    background: #dcfce7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.check-icon {
+    width: 36px;
+    height: 36px;
+    color: #16a34a;
+}
+
+h1 {
+    color: #111827;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+p {
+    color: #6b7280;
+    line-height: 1.7;
+    margin-bottom: 28px;
+}
+
+.button {
+    display: inline-block;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity .2s;
+}
+
+.button:hover {
+    opacity: .9;
+}
+
+.footer {
+    margin-top: 28px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <img
+        src="https://api.suara-mawa.ariear.my.id/logo"
+        alt="Logo Suara Mawa"
+        class="logo"
+    />
+
+    <div class="icon-wrapper">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="check-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5 13l4 4L19 7"
+            />
+        </svg>
+    </div>
+
+    <h1>Password Berhasil Direset</h1>
+
+    <p>
+        Password akun Anda telah berhasil diperbarui.
+        Silakan masuk kembali menggunakan password baru untuk mengakses seluruh fitur Suara Mawa.
+    </p>
+
+    <a href="suaramawa://app" class="button">
+        Buka Aplikasi
+    </a>
+
+    <div class="footer">
+        © 2026 Suara Mawa. All rights reserved.
+    </div>
+
+</div>
+
+</body>
+</html>
+
