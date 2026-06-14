@@ -5,10 +5,6 @@ import Elysia, { redirect, status, t } from 'elysia';
 import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
 
-function on_boarding_page() {
-    const onBoarding = new Elysia();
-}
-
 enum Stage {
     Login = "Login",
     emailVerification = "Email Verification",
@@ -277,7 +273,7 @@ export function auth_setup(app: Elysia) {
                         break;
                     case "ADMIN":
                         temp = {
-                            'mahasiswaDetail':{
+                            'adminDetail':{
                                 'nik': (await db.query.adminDetails.findFirst({
                                     where: eq(adminDetails.userId, user.id),
                                     columns: {
@@ -383,6 +379,22 @@ export function auth_setup(app: Elysia) {
             }, {
                 onboardAuth: true
             })
+            .post("/request-password-reset", async ({body: {email}})=>{
+                const data = await auth.api.requestPasswordReset({
+                    body: {
+                        email: email, // required
+                        redirectTo: `${process.env.BETTER_AUTH_URL}/reset-password`,
+                    },
+                });
+                console.log(data);
+                return data;
+            },{
+                body: t.Object({
+                    email: t.String({
+                        pattern: '\.@mail.unej.ac.id' 
+                    })
+                })
+            })
         )
         // .get("/check/phone/is_verified", async ({ request, user })=>{
         //     return {
@@ -398,6 +410,7 @@ export function auth_setup(app: Elysia) {
         // },{
         //     auth: true
         // })
+
         .get("/error", ({ query: { error } }) => {
             return {
                 error: error

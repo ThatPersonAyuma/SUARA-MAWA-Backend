@@ -75,7 +75,7 @@ async function seed() {
         body:{
             name: "Admin Sistem",
             email: "1@mail.unej.ac.id",
-            password: 'admin123',
+            password: 'Admin123!',
             phoneNumber: "081111111111",
             userRoleId: adminRole.id,
         }
@@ -85,7 +85,7 @@ async function seed() {
             name: "Budi Santoso",
             email: "2@mail.unej.ac.id",
             phoneNumber: "082222222222",
-            password: 'mahasiswa123',
+            password: 'Mahasiswa123!',
             userRoleId: mahasiswaRole.id,
         }
     });
@@ -94,7 +94,7 @@ async function seed() {
             name: "Siti Rahma",
             email: "3@mail.unej.ac.id",
             phoneNumber: "083333333333",
-            password: 'penindak123',
+            password: 'Penindak123!',
             userRoleId: penindakRole.id,
         }
     });

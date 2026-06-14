@@ -27,6 +27,7 @@ const signUpPayloadSchema = z.object({
 });
 
 const EMAIL_VERIFICATION_EXPIRES_IN = 900;
+const RESET_PASSWORD_EXPIRES_IN = 60 * 60;
 
 export async function checkMahasiswaDetail(userId: String){
     const detail = await db.query.mahasiswaDetails.findFirst({
@@ -206,7 +207,31 @@ export const auth = betterAuth({
         autoSignIn: true,
         enabled: true,
         requireEmailVerification: true, // Wajib verifikasi email
+        revokeSessionsOnPasswordReset: true,
+        resetPasswordTokenExpiresIn: RESET_PASSWORD_EXPIRES_IN,
+        sendResetPassword: async ({ user, url, token }, request) => {
+            const expiresAt = new Date(
+                Date.now() + RESET_PASSWORD_EXPIRES_IN * 1000
+            );
+            // const { data, error } = await resend.emails.send({
+            //             from: 'noreply@update.ariear.my.id',
+            //             to: user.email, 
+            //             subject: 'Reset Password Akun',
+            //             html: createHtmlResetPassword(url, user.name, expiresAt)
+            //         });
+            // if (error) {
+            //     return console.error('Gagal mengirim:', error);
+            // }
+            
+            // console.log(createHtmlEmailVerif(url, user.name, expiresAt));
+            console.log('Url: ', url);
+        },
     },
+    // pages: {
+    //     resetPassword: {
+    //         redirectTo: `${process.env.BETTER_AUTH_URL}/reset-password`
+    //     }
+    // },
     socialProviders: {
         google: { // Contoh OAuth2 Google
             clientId: [
@@ -257,7 +282,7 @@ export const auth = betterAuth({
             const { data, error } = await resend.emails.send({
                         from: 'noreply@update.ariear.my.id',
                         to: user.email, 
-                        subject: 'Uji Coba Resend Development',
+                        subject: 'Verifikasi Email',
                         html: createHtmlEmailVerif(url, user.name, expiresAt)
                     });
             if (error) {
@@ -354,7 +379,7 @@ function createHtmlEmailVerif(verification_url: string, name: string, expiredIn:
                 "
                 >
                 <img
-                    src="${env.BETTER_AUTH_URL}/logo"
+                    src="https://api.suara-mawa.ariear.my.id/logo"
                     alt="Logo" width="100" style=" display:block; margin-bottom:20px; border-radius:16px; background:white; padding:8px; object-fit:contain; height:auto; max-width:100%; "
                 />
 
@@ -444,7 +469,165 @@ function createHtmlEmailVerif(verification_url: string, name: string, expiredIn:
                     "
                 >
                     <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:24px;">
-                    Jika Anda tidak merasa membuat akun, Anda dapat mengabaikan email ini.
+                    <strong>Jika Anda tidak merasa membuat akun, Anda dapat mengabaikan email ini.</strong>
+                    </p>
+
+                    <p style="margin:0;font-size:14px;color:#6b7280;line-height:24px;">
+                    Link verifikasi akan kedaluwarsa dalam <strong>${expiredIn}</strong>.
+                    </p>
+                </div>
+                </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+                <td
+                align="center"
+                style="
+                    background:#f9fafb;
+                    padding:24px;
+                    border-top:1px solid #e5e7eb;
+                "
+                >
+                <p style="margin:0;font-size:13px;color:#9ca3af;line-height:22px;">
+                    © 2026 Suara Mawa. All rights reserved.
+                </p>
+                </td>
+            </tr>
+
+            </table>
+        </td>
+        </tr>
+    </table>
+    </body>
+    </html>`;
+} 
+function createHtmlResetPassword(reset_url: string, name: string, expiredIn: Date){
+    return `<!DOCTYPE html>
+    <html lang="id">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Verifikasi Email</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+        <tr>
+        <td align="center">
+            <table
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="
+                max-width:600px;
+                background:#ffffff;
+                border-radius:16px;
+                overflow:hidden;
+                box-shadow:0 4px 20px rgba(0,0,0,0.06);
+            "
+            >
+            
+            <!-- Header -->
+            <tr>
+                <td
+                align="center"
+                style="
+                    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+                    padding:40px 24px 32px;
+                "
+                >
+                <img
+                    src="https://api.suara-mawa.ariear.my.id/logo"
+                    alt="Logo" width="100" style=" display:block; margin-bottom:20px; border-radius:16px; background:white; padding:8px; object-fit:contain; height:auto; max-width:100%; "
+                />
+
+                <h1
+                    style="
+                    margin:0;
+                    font-size:28px;
+                    color:#ffffff;
+                    font-weight:700;
+                    "
+                >
+                    Verifikasi Email
+                </h1>
+
+                <p
+                    style="
+                    margin:12px 0 0;
+                    color:rgba(255,255,255,0.9);
+                    font-size:15px;
+                    line-height:24px;
+                    "
+                >
+                    Satu langkah lagi untuk mengaktifkan akun Anda
+                </p>
+                </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+                <td style="padding:40px 32px;">
+                <p style="margin:0 0 16px;font-size:16px;line-height:28px;">
+                    Halo <strong>${name}</strong>,
+                </p>
+
+                <p style="margin:0 0 24px;font-size:16px;line-height:28px;color:#4b5563;">
+                    Terima kasih telah menggunakan aplikasi kami. Untuk melanjutkan proses reset password akun,
+                    silakan password akun anda Anda dengan menekan tombol di bawah ini.
+                </p>
+
+                <!-- Button -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                    <td align="center" style="padding:8px 0 32px;">
+                        <a
+                        href="${reset_url}"
+                        style="
+                            display:inline-block;
+                            background:#2563eb;
+                            color:#ffffff;
+                            text-decoration:none;
+                            padding:16px 32px;
+                            border-radius:12px;
+                            font-size:16px;
+                            font-weight:600;
+                        "
+                        >
+                        Reset Password
+                        </a>
+                    </td>
+                    </tr>
+                </table>
+
+                <p style="margin:0 0 16px;font-size:14px;line-height:24px;color:#6b7280;">
+                    Jika tombol tidak dapat ditekan, salin dan buka link berikut:
+                </p>
+
+                <p
+                    style="
+                    margin:0 0 32px;
+                    word-break:break-all;
+                    font-size:14px;
+                    line-height:24px;
+                    "
+                >
+                    <a
+                    href="${reset_url}"
+                    style="color:#2563eb;text-decoration:none;"
+                    >
+                    ${reset_url}
+                    </a>
+                </p>
+
+                <div
+                    style="
+                    border-top:1px solid #e5e7eb;
+                    padding-top:24px;
+                    "
+                >
+                    <p style="margin:0 0 8px;font-size:14px;color:#6b7280;line-height:24px;">
+                    <strong>Jika Anda tidak merasa melakukan reset password akun, Anda dapat mengabaikan email ini.</strong>
                     </p>
 
                     <p style="margin:0;font-size:14px;color:#6b7280;line-height:24px;">

@@ -12,7 +12,7 @@ export const app = new Elysia();
 
 async function main() {
 
-    // await initWhatsApp();
+    await initWhatsApp();
 
     console.log("Server started");
     app.onRequest(({ request }) => {
@@ -61,7 +61,15 @@ async function main() {
             return file('storage/assetlinks.json');
         })
         .get('/email-verified', ({})=>{
-            return Bun.file('./verified.html');
+            return Bun.file('./pages/verified.html');
+        }, {
+        })
+        .get('/reset-password', ({})=>{
+            return Bun.file('./pages/reset_password.html');
+        }, {
+        })
+        .get('/reset-password/success', ({})=>{
+            return Bun.file('./pages/reset_success.html');
         }, {
         })
         .get('/set-cookie', ({set})=>{

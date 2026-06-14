@@ -58,7 +58,12 @@ export function firebaseSetup(app: Elysia){
                     const message = {
                         notification: {
                             title: `Halo ${user.name} dari Server!`,
-                            body: 'Ini adalah notifikasi uji coba menggunakan HTTP v1 API.'
+                            body: 'Ini adalah notifikasi uji coba menggunakan HTTP v1 API.',
+                        },
+                        android: {
+                            "notification": {
+                                "channel_id": "report_channel_v4"
+                            }
                         },
                         // Data tambahan (opsional) untuk diproses di dalam aplikasi
                         data: {
@@ -70,13 +75,13 @@ export function firebaseSetup(app: Elysia){
                     };
                     messaging.send(message).then((response: any) => {
                         console.log('Notifikasi sukses dikirim:', response);
-                        return status(200);
+                        
                     })
                     .catch((error: any) => {
                         console.log('Gagal mengirim notifikasi:', error);
-                        return status(500);
                     });
                 }
+                return status(200);
             })
         );
 }
