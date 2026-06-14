@@ -9,6 +9,10 @@ import { REPORT_EVIDENCE_FOLDER, FEEDBACK_ATTACHMENT_FOLDER } from "./shared";
 export async function getAllPublicReports(currentPage: number = 1) {
     const offset = (currentPage - 1) * PAGE_SIZE;
 
+    const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
+    const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
+    const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
+
     // Run the data fetch and the total count concurrently
     const [data, countResult] = await Promise.all([
         db.select({
@@ -19,7 +23,10 @@ export async function getAllPublicReports(currentPage: number = 1) {
             likes: reports.likes,
             authorName: users.name,
             departmentName: departments.name,
-            categoriesName: categories.name
+            categoriesName: categories.name,
+            latestStatus: sql<string>`${latestStatusQuery}`.as('latestStatus'),
+            thumbnail: sql<number>`${thumbnailQuery}`.as('thumbnail'),
+            createdAt: sql<Date>`${createdAtQuery}`.as('createdAt')
         })
             .from(reports)
             .innerJoin(users, eq(users.id, reports.authorId))
@@ -40,8 +47,13 @@ export async function getAllPublicReports(currentPage: number = 1) {
     const totalRows = countResult[0]?.total ?? 0;
     const totalPages = Math.ceil(totalRows / PAGE_SIZE);
 
+    const mappedData = data.map(report => ({
+        ...report,
+        thumbnail: report.thumbnail ? `/report/evidence/${report.thumbnail}/preview` : null
+    }));
+
     return {
-        data,
+        data: mappedData,
         meta: {
             totalRows,
             totalPages,
