@@ -7,6 +7,7 @@ import { initWhatsApp } from "./src/features/auth/whatsapp/client";
 import { reportSetup } from './src/features/reports';
 import { messaging } from './src/features/firebase/firebase';
 import { firebaseSetup } from './src/features/firebase';
+import { setupPgBoss } from './src/features/PG-BOSS';
 
 export const app = new Elysia();
 
@@ -35,6 +36,8 @@ async function main() {
     admin_setup(app);
     reportSetup(app);
     firebaseSetup(app);
+    // Only for testing, comment setupPgBoss
+    setupPgBoss(app);
     app.get('/', () => ({ hello: 'Bun👋' }), {
             auth:true
         })
