@@ -178,7 +178,9 @@ export function setupPgBoss(app: Elysia){
                 channelId: "report_general",
                 title: title,
                 body: body,
-                data: data
+                data: {
+                    id: "123"
+                }
             })
             return status(200);
         }catch(e){

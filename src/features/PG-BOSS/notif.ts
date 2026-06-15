@@ -55,7 +55,7 @@ export async function reportInProgress(reportId: number) {
         body,
         "report_urgent",
         {
-            channelId: ReportInProgress_Channel_ID
+            id: ReportInProgress_Channel_ID
         }
     );
 }
@@ -86,7 +86,7 @@ export async function reportResolved(reportId: number) {
         body,
         "report_urgent",
         {
-            channelId: ReportResolved_Channel_ID
+            id: ReportResolved_Channel_ID
         }
     );
 }
@@ -116,7 +116,7 @@ export async function reportRevision(reportId: number) {
         body,
         "report_urgent",
         {
-            channelId: ReportRevision_Channel_ID
+            id: ReportRevision_Channel_ID
         }
     );
 }
@@ -146,7 +146,7 @@ export async function reportRejected(reportId: number) {
         body,
         "report_urgent",
         {
-            channelId: ReportRejected_Channel_ID
+            id: ReportRejected_Channel_ID.toString()
         }
     );
 }
@@ -189,7 +189,7 @@ export async function onReportCreated(departmentId: number, reportCategoryId: nu
             body,
             "report_urgent",
             {
-                channelId: ReportCreated_Channel_ID
+                id: ReportCreated_Channel_ID
             }
         );
     }
@@ -231,7 +231,7 @@ export async function onRevisionAnswered(reportId: number){
             body,
             "report_urgent",
             {
-                channelId: ReportRevisioned_Channel_ID
+                id: ReportRevisioned_Channel_ID
             }
         );
     }
@@ -266,7 +266,7 @@ export async function notifToAdmin(penindakName: string, adminName: string, admi
             body,
             "report_urgent",
             {
-                channelId: PenindakCreated_Channel_ID
+                id: PenindakCreated_Channel_ID
             }
         );
     }
@@ -340,7 +340,7 @@ export async function notLoginForADay(){
             body,
             "report_general",
             {
-                channelId: ForADay_Channel_ID
+                id: ForADay_Channel_ID
             }
         );
     }
