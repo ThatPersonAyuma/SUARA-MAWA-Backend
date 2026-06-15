@@ -1,9 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/db_index';
-import { adminDetails, mahasiswaDetails, penindakDetails, userRoles, users } from '../../db/schema';
+import { adminDetails, firebaseTokens, mahasiswaDetails, penindakDetails, userRoles, users } from '../../db/schema';
 import Elysia, { redirect, status, t } from 'elysia';
 import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
+import { boss } from '../PG-BOSS';
 
 enum Stage {
     Login = "Login",
@@ -154,7 +155,46 @@ export function auth_setup(app: Elysia) {
                         session: session.session
                     }
                 }
-            }
+            },
+            adminAuth: {
+                async resolve({ status, request: { headers } }) {
+                    const session = await auth.api.getSession({
+                        headers
+                    })
+                    if (!session) throw status(401, {
+                        code: "UNAUTHORIZED",
+                        message: "User Not Found",
+                    });
+                    const user = await db.query.users.findFirst({
+                        where: eq(users.email, session.user.email), // Filter user condition
+                        with: {
+                            userRole: {
+                                where: eq(userRoles.id, session.user.userRoleId), // Filter nested posts condition
+                                columns: { name: true }, // Select specific fields in the relation
+                            },
+                        },
+                        columns: {
+                            id: true, // Select specific user fields
+                            name: true,
+                            email: true,
+                            photoProfileId: true,
+                            emailVerified: true,
+                            phoneNumber: true,
+                            phoneNumberVerified: true,
+                        },
+                    });
+                    if (user?.userRole.name != "ADMIN"){
+                        throw status(401, {
+                            code: "UNAUTHORIZED ADMIN",
+                            message: "User is Not an Admin",
+                        });
+                    }
+                    return {
+                        user: user,
+                        session: session.session
+                    }
+                }
+            },
         });
     app.use(betterAuth)
         .get("/api/auth/sign-up/google", async ({ redirect, query: { callback } }) => {
@@ -195,6 +235,23 @@ export function auth_setup(app: Elysia) {
             })
         })
         .group('/user', (app) => app
+            .post('/logout', async ({set, user, body: {FCMToken}})=>{
+                try{
+                    await auth.api.signOut({
+                        headers: set.headers
+                    });
+                    await db.delete(firebaseTokens)
+                        .where(eq(firebaseTokens.token, FCMToken));
+                    return status(200);
+                }catch(e){
+                    return status(500, e);
+                }
+            },{
+                body: t.Object({
+                    FCMToken: t.String()
+                }),
+                onboardAuth: true
+            })
             .get("/get-data", async ({ request, user }) => {
                 return user;
             }, {
@@ -292,6 +349,53 @@ export function auth_setup(app: Elysia) {
                 };
             }, {
                 auth: true
+            })
+            .post('/penindak/created', async({body:{name, email, password, phoneNumber, nik, departmentId}, user})=>{
+                // Implement admin creation here
+                const roles = await db.query.userRoles.findMany();
+                const penindakRole = roles.find(r => r.name === "PENINDAK")!;
+                await auth.api.signUpEmail({
+                    body:{
+                        name: name,
+                        email: email,
+                        password: password,
+                        phoneNumber: phoneNumber,
+                        userRoleId: penindakRole.id,
+                    }
+                });
+                const retrieved_user = await db.query.users.findFirst({
+                    where: eq(users.email, email),
+                    columns:{
+                        id: true
+                    }
+                })
+                if (retrieved_user == null){
+                    return status(500);
+                }
+                await db.insert(penindakDetails)
+                    .values({
+                        userId: retrieved_user.id,
+                        nik: nik,
+                        departmentId: departmentId
+                    });
+                await boss.send(
+                    'notify-to-admin',
+                    {
+                        penindakName: name,
+                        adminName: user.name,
+                        adminId: user.id
+                    }
+                );
+            },{
+                body: t.Object({
+                    name: t.String(),
+                    email: t.String(),
+                    password: t.String(),
+                    phoneNumber: t.String(),
+                    nik: t.String(),
+                    departmentId: t.Number()
+                }),
+                adminAuth: true
             })
             .get("/mahasiswa-detail", async ({ user }) => {
                 try {

@@ -4,6 +4,7 @@ import { storeFile } from "../filesystem/fs_utils";
 import { asc, eq, and, sql } from 'drizzle-orm';
 import { PAGE_SIZE } from "../shared";
 import { REPORT_EVIDENCE_FOLDER } from "./shared";
+import { boss } from "../PG-BOSS";
 
 export async function createReport(
     userId: string,
@@ -65,6 +66,14 @@ export async function createReport(
                     fileId: storeFileId
                 });
         }
+        await boss.send(
+            'on-report-created',
+            {
+                departmentId: departmentId,
+                reportCategoryId: categoryId,
+                reportTitle: title
+            }
+        )
         return {
             'status': 'success',
             'message': 'Semua file berhasil disimpan'

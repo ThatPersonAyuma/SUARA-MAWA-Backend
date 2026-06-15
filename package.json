@@ -6,7 +6,10 @@
     "startdev": "bun --watch main.ts",
     "typecheck": "tsc",
     "predev": "bun drizzle-kit push",
-    "db:seed": "bun run src/db/seeder.ts"
+    "db:seed": "bun run src/db/seeder.ts",
+    "start:api":"bun run main.ts",
+    "start:worker":"bun run src/features/PG-BOSS/index.ts",
+    "start:all":"bun run start:api & bun run start:worker"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
@@ -26,6 +29,7 @@
     "elysia": "^1.4.28",
     "firebase-admin": "^13.10.0",
     "pg": "^8.21.0",
+    "pg-boss": "^12.19.1",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0",
     "resend": "^6.12.4",

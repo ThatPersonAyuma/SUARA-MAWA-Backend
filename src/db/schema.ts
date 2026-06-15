@@ -156,7 +156,7 @@ export const adminDetails = pgTable("admin_details", {
     .unique()
     .references(() => users.id),
   nik: varchar({ length: 255 }).notNull().unique(),
-  nip: varchar({ length: 255 }).notNull().unique(),
+  // nip: varchar({ length: 255 }).notNull().unique(),
 });
 
 export const penindakDetails = pgTable("penindak_details", {
@@ -169,7 +169,7 @@ export const penindakDetails = pgTable("penindak_details", {
     .notNull()
     .references(() => departments.id),
   nik: varchar({ length: 255 }).notNull().unique(),
-  nip: varchar({ length: 255 }).notNull().unique(),
+  // nip: varchar({ length: 255 }).notNull().unique(),
 });
 /* #endregion */
 

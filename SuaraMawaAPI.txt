@@ -22,3 +22,23 @@ GET BASE/report/evidence/:reportEvidenceId/preview => return file berupa preview
 GET BASE/report/evidence/:reportEvidenceId/download => memerintahkan browser untuk download file daripada preview
 POST BASE/report/feedback/create => {Lihat kode} untuk membuat feedback, bisa penindak bisa mahasiswa, feedback menitikberatkan perubahan status
 POST BASE/report/feedback/detail => {reportStatusId: int} return detail dari feedback, ini dibuat terpisah agar bisa hanya ditampilkan yang perlu, sisanya bisa di load nanti dengan data mengambil dari endpoint ini
+
+
+PgBoss Queue List
+1. do-work
+2. do-notify
+3. daily-reminder (do not send, only be used on schedule)
+4. notify-to-admin (send on penindak creation, payload {
+    penindakName: string,
+    adminName: string,
+    adminId: string
+})
+5. on-report-created (payload{
+    departmentId: number,
+    reportCategoryId: number,
+    reportTitle: string
+})
+6. on-reportStatus-changed (send on revision answered, condition status from revision to pending, payload {
+    reportId: number,
+    status: string
+})

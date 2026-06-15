@@ -1,10 +1,11 @@
 import { db } from "../../db/db_index";
-import { asc, eq, and, count, sql } from 'drizzle-orm';
+import { asc, eq, and, count, sql, desc } from 'drizzle-orm';
 import { categories, departments, feedbackAttachments, feedbacks, reportEvidences, reports, reportStatus, reportStatusEnum, users } from "../../db/schema";
 import { PAGE_SIZE } from "../shared";
 import { reportSetup } from ".";
 import { getFile, storeFile } from "../filesystem/fs_utils";
 import { REPORT_EVIDENCE_FOLDER, FEEDBACK_ATTACHMENT_FOLDER } from "./shared";
+import { boss } from "../PG-BOSS";
 
 export async function getAllPublicReports(currentPage: number = 1) {
     const offset = (currentPage - 1) * PAGE_SIZE;
@@ -254,6 +255,13 @@ export async function createFeedback(userId: string, reportId: number, status: s
                     fileId: storeFileId
                 });
         }
+        await boss.send(
+            'on-reportStatus-changed',
+            {
+                reportId: reportId,
+                status: status
+            }
+        )
         return {
             'status': 'success',
             'message': 'Berhasil memberikan feedback'
