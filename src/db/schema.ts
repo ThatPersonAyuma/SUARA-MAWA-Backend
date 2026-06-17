@@ -184,7 +184,6 @@ export const reports = pgTable("reports", {
   locationDetail: text("location_detail"),
   isPublic: boolean("is_public").notNull(),
   isDeleted: boolean("is_deleted").default(false).notNull(),
-  likes: integer().default(0).notNull(),
   authorId: text("author_id")
     .notNull()
     .references(() => users.id),
@@ -256,6 +255,20 @@ export const comments = pgTable("comments", {
 });
 /* #endregion */
 
+/* #region Report Likes */
+export const reportLikes = pgTable("report_likes", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  reportId: integer("report_id")
+    .notNull()
+    .references(() => reports.id),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  likeStatus: boolean("like_status").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+/* #endregion */
+
 /* #region  Users Relations */
 export const usersRelations = relations(users, ({ one, many }) => ({
   // Relasi Internal Better Auth / OAuth
@@ -284,6 +297,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   reports: many(reports),
   comments: many(comments),
   changedStatuses: many(reportStatus),
+  reportLikes: many(reportLikes),
 }));
 
 /* #endregion */
@@ -294,7 +308,7 @@ export const userRolesRelationship = relations(userRoles, ({ many }) => ({
 export const firebaseTokensRelations = relations(firebaseTokens, ({ one }) => ({
   user: one(users, {
     fields: [firebaseTokens.userId],
-    references: [users.id] 
+    references: [users.id]
   })
 }));
 /* #endregion */
@@ -378,7 +392,8 @@ export const reportsRelations = relations(reports, ({ one, many }) => ({
   // many 
   reportStatus: many(reportStatus),
   comments: many(comments),
-  reportEvidences: many(reportEvidences)
+  reportEvidences: many(reportEvidences),
+  reportLikes: many(reportLikes)
 }));
 /* #endregion */
 
@@ -444,6 +459,19 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   }),
   report: one(reports, {
     fields: [comments.reportId],
+    references: [reports.id],
+  }),
+}));
+/* #endregion */
+
+/* #region Report Likes Relations */
+export const reportLikesRelations = relations(reportLikes, ({ one }) => ({
+  user: one(users, {
+    fields: [reportLikes.userId],
+    references: [users.id],
+  }),
+  report: one(reports, {
+    fields: [reportLikes.reportId],
     references: [reports.id],
   }),
 }));

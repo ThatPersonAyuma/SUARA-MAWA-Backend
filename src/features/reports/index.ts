@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { createReport, getMyReports } from "./mahasiswa";
-import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getFeedbackAttachment, getReportDetail, getReportEvidences, getReportFeedback, getReportsByDepartmentAndStatus } from "./all";
+import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getFeedbackAttachment, getReportDetail, getReportEvidences, getReportFeedback, getReportsByDepartmentAndStatus, toggleLikeReport, addComment, getComments } from "./all";
 import { isNumeric } from "../shared";
 
 
@@ -89,6 +89,24 @@ export function reportSetup(app: Elysia) {
                         body: t.Object({
                             reportId: t.Number()
                         })
+                    })
+                    .post('/:id/like', async (context: any) => {
+                        const { params: { id }, user } = context;
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await toggleLikeReport(user.id, Number(id));
+                    })
+                    .post('/:id/comment', async (context: any) => {
+                        const { params: { id }, body: { comment }, user } = context;
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await addComment(user.id, Number(id), comment);
+                    }, {
+                        body: t.Object({
+                            comment: t.String()
+                        })
+                    })
+                    .get('/:id/comments', async ({ params: { id } }) => {
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await getComments(Number(id));
                     })
                     .get("/evidence/:reportEvidenceId/preview", async ({ params: { reportEvidenceId }, set }) => {
                         if (reportEvidenceId == null) return {
