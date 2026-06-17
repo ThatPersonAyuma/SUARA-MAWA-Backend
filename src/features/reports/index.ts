@@ -63,12 +63,13 @@ export function reportSetup(app: Elysia) {
                     .get('/status/all', () => {
                         return getAllReportStatus(); // return list
                     })
-                    .get('/all', async ({ query: { currentPage } }) => {
+                    .get('/all', async (context: any) => {
+                        const { query: { currentPage }, user } = context;
                         // if (!isNumeric(currentPage))return{
                         //     'status':'failed',
                         //     'message':'Id harus numeric'
                         // }
-                        return await getAllPublicReports(currentPage);
+                        return await getAllPublicReports(currentPage, user.id);
                     }, {
                         query: t.Object({
                             currentPage: t.Optional(t.Number())
@@ -83,8 +84,9 @@ export function reportSetup(app: Elysia) {
                             currentPage: t.Optional(t.Numeric())
                         })
                     })
-                    .post('/detail', async ({ body: { reportId } }) => {
-                        return await getReportDetail(reportId);
+                    .post('/detail', async (context: any) => {
+                        const { body: { reportId }, user } = context;
+                        return await getReportDetail(reportId, user.id);
                     }, {
                         body: t.Object({
                             reportId: t.Number()
@@ -152,7 +154,8 @@ export function reportSetup(app: Elysia) {
                     },)
                     .group('/feedback', (feedbackApp) =>
                         feedbackApp
-                            .post('/create', ({ body, user }) => {
+                            .post('/create', (context: any) => {
+                                const { body, user } = context;
                                 const filesArray = Array.isArray(body.files)
                                     ? body.files
                                     : (body.files ? [body.files] : null);

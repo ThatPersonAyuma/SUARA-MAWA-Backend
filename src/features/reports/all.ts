@@ -7,13 +7,14 @@ import { getFile, storeFile } from "../filesystem/fs_utils";
 import { REPORT_EVIDENCE_FOLDER, FEEDBACK_ATTACHMENT_FOLDER } from "./shared";
 import { boss } from "../PG-BOSS";
 
-export async function getAllPublicReports(currentPage: number = 1) {
+export async function getAllPublicReports(currentPage: number = 1, userId?: string) {
     const offset = (currentPage - 1) * PAGE_SIZE;
 
     const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
     const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
     const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
     const likesQuery = sql`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`;
+    const isLikedQuery = userId ? sql`(SELECT EXISTS(SELECT 1 FROM report_likes WHERE report_id = ${reports.id} AND user_id = ${userId} AND like_status = true))` : sql`false`;
 
     // Run the data fetch and the total count concurrently
     const [data, countResult] = await Promise.all([
@@ -23,6 +24,7 @@ export async function getAllPublicReports(currentPage: number = 1) {
             description: reports.description,
             location: reports.location,
             likes: sql<number>`${likesQuery}`.as('likes'),
+            isLiked: sql<boolean>`${isLikedQuery}`.as('isLiked'),
             authorName: users.name,
             departmentName: departments.name,
             categoriesName: categories.name,
@@ -65,11 +67,12 @@ export async function getAllPublicReports(currentPage: number = 1) {
     };
 }
 
-export async function getReportDetail(reportId: number) {
+export async function getReportDetail(reportId: number, userId?: string) {
     const res = await db.query.reports.findFirst({
         where: eq(reports.id, reportId),
         extras: {
-            likes: sql<number>`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`.as('likes')
+            likes: sql<number>`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`.as('likes'),
+            isLiked: userId ? sql<boolean>`(SELECT EXISTS(SELECT 1 FROM report_likes WHERE report_id = ${reports.id} AND user_id = ${userId} AND like_status = true))`.as('isLiked') : sql<boolean>`false`.as('isLiked')
         },
         with: {
             author: {

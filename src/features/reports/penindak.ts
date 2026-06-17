@@ -1,15 +1,16 @@
 import { db } from "../../db/db_index";
 import { categories, departments, reports, users } from "../../db/schema";
-import { asc, eq, and } from 'drizzle-orm';
+import { asc, eq, and, sql } from 'drizzle-orm';
 import { PAGE_SIZE } from "../shared";
 
 export async function getPenindakReports(userId: string, departmentId: number, currentPage: number = 1) {
+    const likesQuery = sql`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`;
     const all_reports = db.select({
         id: reports.id,
         title: reports.title,
         description: reports.description,
         location: reports.location,
-        likes: reports.likes,
+        likes: sql<number>`${likesQuery}`.as('likes'),
         authorName: users.name,
         authorId: users.id,
         departmentName: departments.name,
