@@ -8,7 +8,7 @@ export async function getPenindakReports(userId: string, departmentId: number, c
         id: reports.id,
         title: reports.title,
         description: reports.description,
-        locationDetail: reports.locationDetail,
+        location: reports.location,
         likes: reports.likes,
         authorName: users.name,
         authorId: users.id,

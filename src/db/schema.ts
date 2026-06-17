@@ -181,7 +181,6 @@ export const reports = pgTable("reports", {
   location: varchar({ length: 255 }).notNull(),
   locationLat: doublePrecision("location_lat").notNull(),
   locationLong: doublePrecision("location_long").notNull(),
-  locationDetail: text("location_detail"),
   isPublic: boolean("is_public").notNull(),
   isDeleted: boolean("is_deleted").default(false).notNull(),
   authorId: text("author_id")
