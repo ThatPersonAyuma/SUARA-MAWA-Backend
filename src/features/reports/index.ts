@@ -163,7 +163,6 @@ export function reportSetup(app: Elysia) {
                                 const namesArray = Array.isArray(body.names)
                                     ? body.names
                                     : (body.names ? [body.names] : null);
-                                console.log("Start Craet")
                                 try{   
                                     return  await createFeedback(
                                     user.id,
