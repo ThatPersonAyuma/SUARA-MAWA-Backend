@@ -1,18 +1,20 @@
 import { db } from "../../db/db_index";
 import { asc, eq, and, count, sql, desc } from 'drizzle-orm';
-import { categories, departments, feedbackAttachments, feedbacks, reportEvidences, reports, reportStatus, reportStatusEnum, users } from "../../db/schema";
+import { categories, departments, feedbackAttachments, feedbacks, reportEvidences, reports, reportStatus, reportStatusEnum, users, reportLikes, comments } from "../../db/schema";
 import { PAGE_SIZE } from "../shared";
 import { reportSetup } from ".";
 import { getFile, storeFile } from "../filesystem/fs_utils";
 import { REPORT_EVIDENCE_FOLDER, FEEDBACK_ATTACHMENT_FOLDER } from "./shared";
 import { boss } from "../PG-BOSS";
 
-export async function getAllPublicReports(currentPage: number = 1) {
+export async function getAllPublicReports(currentPage: number = 1, userId?: string) {
     const offset = (currentPage - 1) * PAGE_SIZE;
 
     const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
     const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
     const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
+    const likesQuery = sql`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`;
+    const isLikedQuery = userId ? sql`(SELECT EXISTS(SELECT 1 FROM report_likes WHERE report_id = ${reports.id} AND user_id = ${userId} AND like_status = true))` : sql`false`;
 
     // Run the data fetch and the total count concurrently
     const [data, countResult] = await Promise.all([
@@ -20,8 +22,9 @@ export async function getAllPublicReports(currentPage: number = 1) {
             id: reports.id,
             title: reports.title,
             description: reports.description,
-            locationDetail: reports.locationDetail,
-            likes: reports.likes,
+            location: reports.location,
+            likes: sql<number>`${likesQuery}`.as('likes'),
+            isLiked: sql<boolean>`${isLikedQuery}`.as('isLiked'),
             authorName: users.name,
             departmentName: departments.name,
             categoriesName: categories.name,
@@ -64,9 +67,13 @@ export async function getAllPublicReports(currentPage: number = 1) {
     };
 }
 
-export async function getReportDetail(reportId: number) {
+export async function getReportDetail(reportId: number, userId?: string) {
     const res = await db.query.reports.findFirst({
         where: eq(reports.id, reportId),
+        extras: {
+            likes: sql<number>`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`.as('likes'),
+            isLiked: userId ? sql<boolean>`(SELECT EXISTS(SELECT 1 FROM report_likes WHERE report_id = ${reports.id} AND user_id = ${userId} AND like_status = true))`.as('isLiked') : sql<boolean>`false`.as('isLiked')
+        },
         with: {
             author: {
                 columns: {
@@ -102,7 +109,8 @@ export async function getReportDetail(reportId: number) {
                     changedById: {
                         columns: {
                             id: true,
-                            name: true
+                            name: true,
+                            photoProfileId: true
                         }
                     }
                 }
@@ -124,7 +132,7 @@ export async function getReportDetail(reportId: number) {
         return dateA - dateB;
     });
 
-    const reportDate = sortedStatuses.length > 0 ? sortedStatuses[0].changedAt : null;
+    const reportDate = sortedStatuses.length > 0 ? sortedStatuses[0]?.changedAt : null;
 
     const mappedReportStatus = res.reportStatus.map(status => ({
         id: status.id,
@@ -177,7 +185,8 @@ export async function getReportFeedback(reportStatusId: number) {
             changedById: {
                 columns: {
                     id: true,
-                    name: true
+                    name: true,
+                    photoProfileId: true
                 }
             }
         }
@@ -218,7 +227,7 @@ export async function createFeedback(userId: string, reportId: number, status: s
     const rs_res = await db.insert(reportStatus)
         .values({
             reportId: reportId,
-            status: status,
+            status: status as any,
             changedById: userId
         }).returning({ insertedId: reportStatus.id });
     if (rs_res[0] == null) return {
@@ -311,14 +320,15 @@ export async function getReportsByDepartmentAndStatus(departmentId: number, stat
     const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
     const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
     const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
+    const likesQuery = sql`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`;
 
     const [data, countResult] = await Promise.all([
         db.select({
             id: reports.id,
             title: reports.title,
             description: reports.description,
-            locationDetail: reports.locationDetail,
-            likes: reports.likes,
+            location: reports.location,
+            likes: sql<number>`${likesQuery}`.as('likes'),
             authorName: users.name,
             departmentName: departments.name,
             categoriesName: categories.name,
@@ -361,4 +371,59 @@ export async function getReportsByDepartmentAndStatus(departmentId: number, stat
             PAGE_SIZE,
         }
     };
+}
+
+export async function toggleLikeReport(userId: string, reportId: number) {
+    const existingLike = await db.query.reportLikes.findFirst({
+        where: and(eq(reportLikes.userId, userId), eq(reportLikes.reportId, reportId))
+    });
+
+    if (existingLike) {
+        await db.update(reportLikes)
+            .set({ likeStatus: !existingLike.likeStatus })
+            .where(eq(reportLikes.id, existingLike.id));
+        return { status: 'success', message: existingLike.likeStatus ? 'Like removed' : 'Like added' };
+    } else {
+        await db.insert(reportLikes).values({ userId, reportId, likeStatus: true });
+        return { status: 'success', message: 'Like added' };
+    }
+}
+
+export async function addComment(userId: string, reportId: number, commentText: string) {
+    const res = await db.insert(comments).values({
+        userId,
+        reportId,
+        comment: commentText
+    }).returning();
+
+    if (res.length > 0) {
+        return { status: 'success', message: 'Comment added', data: res[0] };
+    }
+    return { status: 'failed', message: 'Failed to add comment' };
+}
+
+export async function getComments(reportId: number) {
+    const res = await db.query.comments.findMany({
+        where: eq(comments.reportId, reportId),
+        orderBy: [desc(comments.createdAt)],
+        with: {
+            user: {
+                columns: {
+                    id: true,
+                    name: true,
+                    photoProfileId: true
+                }
+            }
+        }
+    });
+
+    const mappedComments = res.map(comment => ({
+        ...comment,
+        user: {
+            ...comment.user,
+            url_foto_profil: comment.user.photoProfileId ? `/users/${encodeURIComponent(comment.user.name)}/profile/photo` : null
+        }
+    }));
+
+    return { status: 'success', data: mappedComments };
 }

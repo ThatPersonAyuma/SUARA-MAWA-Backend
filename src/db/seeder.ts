@@ -16,6 +16,7 @@ import {
     reportEvidences,
     files,
     feedbackAttachments,
+    reportLikes,
 } from "./schema";
 
 async function seed() {
@@ -72,7 +73,7 @@ async function seed() {
     // =========================
     console.log("Inserting users...");
     await auth.api.signUpEmail({
-        body:{
+        body: {
             name: "Admin Sistem",
             email: "1@mail.unej.ac.id",
             password: 'Admin123!',
@@ -81,7 +82,7 @@ async function seed() {
         }
     });
     await auth.api.signUpEmail({
-        body:{
+        body: {
             name: "Budi Santoso",
             email: "2@mail.unej.ac.id",
             phoneNumber: "082222222222",
@@ -90,7 +91,7 @@ async function seed() {
         }
     });
     await auth.api.signUpEmail({
-        body:{
+        body: {
             name: "Siti Rahma",
             email: "3@mail.unej.ac.id",
             phoneNumber: "083333333333",
@@ -109,18 +110,18 @@ async function seed() {
     // Profile
     const profiles = await db.insert(files).values([
         {
-            name:"imageGweh.jpg",
-            filetype:'image',
+            name: "imageGweh.jpg",
+            filetype: 'image',
         },
         {
-            name:"mahasiswa.png",
-            filetype:'image',
+            name: "mahasiswa.png",
+            filetype: 'image',
         },
         {
-            name:"penindak.png",
-            filetype:'image',
+            name: "penindak.png",
+            filetype: 'image',
         },
-    ]).returning({insertedId: files.id});
+    ]).returning({ insertedId: files.id });
     await db.update(users)
         .set({
             emailVerified: true,
@@ -145,9 +146,9 @@ async function seed() {
             photoProfileId: profiles[2]?.insertedId
         })
         .where(eq(users.id, penindak.id))
-  // =========================
-  // User Details
-  // =========================
+    // =========================
+    // User Details
+    // =========================
     console.log("Inserting user details...");
 
     await db.insert(adminDetails).values([
@@ -189,7 +190,6 @@ async function seed() {
             locationLong: 112.7521,
             isPublic: true,
             isDeleted: false,
-            likes: 5,
             authorId: mahasiswa.id,
             departmentId: tu.id,
             categoryId: prasarana.id,
@@ -203,12 +203,11 @@ async function seed() {
             locationLong: 112.7520,
             isPublic: true,
             isDeleted: false,
-            likes: 2,
             authorId: mahasiswa.id,
             departmentId: kemahasiswaan.id,
             categoryId: mataKuliah.id,
         },
-    ]).returning({returningId: reports.id});
+    ]).returning({ returningId: reports.id });
 
     // =========================
     // Report Evidences
@@ -217,18 +216,18 @@ async function seed() {
 
     const evidenceFiles = await db.insert(files).values([
         {
-            name:"lampuruask.webp",
-            filetype:'image',
+            name: "lampuruask.webp",
+            filetype: 'image',
         },
         {
-            name:"inilampurusak.pdf",
-            filetype:'document',
+            name: "inilampurusak.pdf",
+            filetype: 'document',
         },
         {
-            name:"lampuruask-doksli.mp4",
-            filetype:'video',
+            name: "lampuruask-doksli.mp4",
+            filetype: 'video',
         },
-    ]).returning({insertedId: files.id});
+    ]).returning({ insertedId: files.id });
 
     console.log("Inserting report evidences...");
     // @ts-expect-error
@@ -239,11 +238,11 @@ async function seed() {
         },
         {
             reportId: insertedReports[0]?.returningId,
-            fileId: evidenceFiles[1]?.insertedId 
+            fileId: evidenceFiles[1]?.insertedId
         },
         {
             reportId: insertedReports[0]?.returningId,
-            fileId: evidenceFiles[2]?.insertedId 
+            fileId: evidenceFiles[2]?.insertedId
         },
     ]);
 
@@ -269,7 +268,7 @@ async function seed() {
             status: "resolved",
             changedById: penindak.id,
         },
-    ]).returning({insertedId: reportStatus.id});
+    ]).returning({ insertedId: reportStatus.id });
 
     // =========================
     // Feedback
@@ -278,14 +277,14 @@ async function seed() {
     // @ts-expect-error
     const feedbackIds = await db.insert(feedbacks).values([
         {
-            reportStatusId:reportStatusIds[1]?.insertedId,
+            reportStatusId: reportStatusIds[1]?.insertedId,
             description: "Akan kami tindak lanjuti mohon untuk ditunggu hasilnya."
         },
         {
-            reportStatusId:reportStatusIds[2]?.insertedId,
+            reportStatusId: reportStatusIds[2]?.insertedId,
             description: "Kami sudah melakukan perbaikan pada lampu dan sudah dapat digunakan."
         },
-    ]).returning({insertedId: feedbacks.id});
+    ]).returning({ insertedId: feedbacks.id });
 
     // =========================
     // Feedback Attachments
@@ -294,10 +293,10 @@ async function seed() {
 
     const faFiles = await db.insert(files).values([
         {
-            name:"lampusudahfix.webp",
-            filetype:'image',
+            name: "lampusudahfix.webp",
+            filetype: 'image',
         },
-    ]).returning({insertedId: files.id});
+    ]).returning({ insertedId: files.id });
 
     console.log("Inserting feedback attachment...");
     // @ts-expect-error
@@ -323,6 +322,29 @@ async function seed() {
             reportId: insertedReports[1]?.returningId,
             userId: admin.id,
             comment: "Akan segera kami hubungi.",
+        },
+    ]);
+
+    // =========================
+    // Report Likes
+    // =========================
+    console.log("Inserting report likes...");
+    // @ts-expect-error
+    await db.insert(reportLikes).values([
+        {
+            reportId: insertedReports[0]?.returningId,
+            userId: mahasiswa.id,
+            likeStatus: true,
+        },
+        {
+            reportId: insertedReports[0]?.returningId,
+            userId: admin.id,
+            likeStatus: true,
+        },
+        {
+            reportId: insertedReports[1]?.returningId,
+            userId: penindak.id,
+            likeStatus: true,
         },
     ]);
 

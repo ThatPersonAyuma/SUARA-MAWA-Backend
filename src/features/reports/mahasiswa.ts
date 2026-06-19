@@ -12,7 +12,7 @@ export async function createReport(
     description: string,
     locationLat: number,
     locationLong: number,
-    locationDetail: string | null,
+    location: string | null,
     isPublic: boolean,
     departmentId: number,
     categoryId: number,
@@ -33,10 +33,9 @@ export async function createReport(
                 departmentId: departmentId,
                 title: title,
                 description: description,
-                location: locationDetail || "GPS Location",
+                location: location || "GPS Location",
                 locationLat: locationLat,
                 locationLong: locationLong,
-                locationDetail: locationDetail,
                 isPublic: isPublic,
                 categoryId: categoryId,
             }).returning({ insertedId: reports.id });
@@ -90,13 +89,14 @@ export async function getMyReports(userId: string, currentPage: number = 1) {
     const latestStatusQuery = sql`(SELECT status FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at DESC, id DESC LIMIT 1)`;
     const thumbnailQuery = sql`(SELECT re.id FROM report_evidences re JOIN files f ON re.file_id = f.id WHERE re.report_id = ${reports.id} AND f.filetype = 'image' ORDER BY re.id ASC LIMIT 1)`;
     const createdAtQuery = sql`(SELECT changed_at FROM report_status WHERE report_id = ${reports.id} ORDER BY changed_at ASC, id ASC LIMIT 1)`;
+    const likesQuery = sql`(SELECT COUNT(*) FROM report_likes WHERE report_id = ${reports.id} AND like_status = true)`;
 
     const all_reports = await db.select({
         id: reports.id,
         title: reports.title,
         description: reports.description,
-        locationDetail: reports.locationDetail,
-        likes: reports.likes,
+        location: reports.location,
+        likes: sql<number>`${likesQuery}`.as('likes'),
         authorName: users.name,
         departmentName: departments.name,
         categoriesName: categories.name,

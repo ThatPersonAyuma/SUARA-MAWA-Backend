@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { createReport, getMyReports } from "./mahasiswa";
-import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getFeedbackAttachment, getReportDetail, getReportEvidences, getReportFeedback, getReportsByDepartmentAndStatus } from "./all";
+import { createFeedback, getAllCategories, getAllDepartments, getAllPublicReports, getAllReportStatus, getFeedbackAttachment, getReportDetail, getReportEvidences, getReportFeedback, getReportsByDepartmentAndStatus, toggleLikeReport, addComment, getComments } from "./all";
 import { isNumeric } from "../shared";
 
 
@@ -11,7 +11,7 @@ export function reportSetup(app: Elysia) {
         },
         (myApp) =>
             myApp.post("/report/create", async ({ body: { title, description, locationLat,
-                locationLong, locationDetail, isPublic, departmentId, categoryId, files, names },
+                locationLong, location, isPublic, departmentId, categoryId, files, names },
                 user }) => {
                 return await createReport(
                     user.id,
@@ -19,7 +19,7 @@ export function reportSetup(app: Elysia) {
                     description,
                     locationLat,
                     locationLong,
-                    locationDetail ?? null,
+                    location ?? null,
                     isPublic,
                     departmentId,
                     categoryId,
@@ -32,7 +32,7 @@ export function reportSetup(app: Elysia) {
                     description: t.String(),
                     locationLat: t.Numeric(),
                     locationLong: t.Numeric(),
-                    locationDetail: t.Optional(t.String()),
+                    location: t.Optional(t.String()),
                     isPublic: t.BooleanString(),
                     departmentId: t.Numeric(),
                     categoryId: t.Numeric(),
@@ -63,12 +63,13 @@ export function reportSetup(app: Elysia) {
                     .get('/status/all', () => {
                         return getAllReportStatus(); // return list
                     })
-                    .get('/all', async ({ query: { currentPage } }) => {
+                    .get('/all', async (context: any) => {
+                        const { query: { currentPage }, user } = context;
                         // if (!isNumeric(currentPage))return{
                         //     'status':'failed',
                         //     'message':'Id harus numeric'
                         // }
-                        return await getAllPublicReports(currentPage);
+                        return await getAllPublicReports(currentPage, user.id);
                     }, {
                         query: t.Object({
                             currentPage: t.Optional(t.Number())
@@ -83,12 +84,31 @@ export function reportSetup(app: Elysia) {
                             currentPage: t.Optional(t.Numeric())
                         })
                     })
-                    .post('/detail', async ({ body: { reportId } }) => {
-                        return await getReportDetail(reportId);
+                    .post('/detail', async (context: any) => {
+                        const { body: { reportId }, user } = context;
+                        return await getReportDetail(reportId, user.id);
                     }, {
                         body: t.Object({
                             reportId: t.Number()
                         })
+                    })
+                    .post('/:id/like', async (context: any) => {
+                        const { params: { id }, user } = context;
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await toggleLikeReport(user.id, Number(id));
+                    })
+                    .post('/:id/comment', async (context: any) => {
+                        const { params: { id }, body: { comment }, user } = context;
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await addComment(user.id, Number(id), comment);
+                    }, {
+                        body: t.Object({
+                            comment: t.String()
+                        })
+                    })
+                    .get('/:id/comments', async ({ params: { id } }) => {
+                        if (!isNumeric(id)) return { status: 'failed', message: 'Id harus numeric' };
+                        return await getComments(Number(id));
                     })
                     .get("/evidence/:reportEvidenceId/preview", async ({ params: { reportEvidenceId }, set }) => {
                         if (reportEvidenceId == null) return {
@@ -134,7 +154,8 @@ export function reportSetup(app: Elysia) {
                     },)
                     .group('/feedback', (feedbackApp) =>
                         feedbackApp
-                            .post('/create', async ({ body, user }) => {
+                            .post('/create', (context: any) => {
+                                const { body, user } = context;
                                 const filesArray = Array.isArray(body.files)
                                     ? body.files
                                     : (body.files ? [body.files] : null);
