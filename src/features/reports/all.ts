@@ -109,7 +109,8 @@ export async function getReportDetail(reportId: number, userId?: string) {
                     changedById: {
                         columns: {
                             id: true,
-                            name: true
+                            name: true,
+                            photoProfileId: true
                         }
                     }
                 }
@@ -184,7 +185,8 @@ export async function getReportFeedback(reportStatusId: number) {
             changedById: {
                 columns: {
                     id: true,
-                    name: true
+                    name: true,
+                    photoProfileId: true
                 }
             }
         }
@@ -262,22 +264,19 @@ export async function createFeedback(userId: string, reportId: number, status: s
                     fileId: storeFileId
                 });
         }
-        await boss.send(
-            'on-reportStatus-changed',
-            {
-                reportId: reportId,
-                status: status
-            }
-        )
-        return {
-            'status': 'success',
-            'message': 'Berhasil memberikan feedback'
+    }
+
+    await boss.send(
+        'on-reportStatus-changed',
+        {
+            reportId: reportId,
+            status: status
         }
-    } else {
-        return {
-            'status': 'success',
-            'message': 'Berhasil memberikan feedback'
-        }
+    )
+
+    return {
+        'status': 'success',
+        'message': 'Berhasil memberikan feedback'
     }
 }
 

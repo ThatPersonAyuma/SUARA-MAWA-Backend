@@ -102,40 +102,43 @@ export async function initQueue() {
             const data = job[0]?.data as Record<string, any>;
             if (data['reportId']==null){
                 console.log("Error on on-reportStatus-changed, ensure data is correct")
+                return;
             }
-            const prev_res = await db.select({
+            // Fetch the last 2 statuses to determine the state transition.
+            // Index 0 = newest (just inserted), index 1 = previous.
+            const latestStatuses = await db.select({
                     status: reportStatus.status
                 })
                 .from(reportStatus)
                 .where(eq(reportStatus.reportId, data['reportId']))
                 .orderBy(desc(reportStatus.changedAt))
-                .limit(1);
-            if (prev_res != null){
-                // "pending",
-                // "in_progress",
-                // "resolved",
-                // "revision",
-                // "rejected",
-                if (prev_res[0]?.status=="revision"){
-                    await onRevisionAnswered(
-                        data['reportId']
-                    );
-                    return;
-                }
-                switch (data['status']){
-                    case "in_progress":
-                        await reportInProgress(data['reportId'])
-                        break;
-                    case "resolved":
-                        await reportResolved(data['reportId'])
-                        break;
-                    case "revision":
-                        await reportRevision(data['reportId'])
-                        break;
-                    case "rejected":
-                        await reportRejected(data['reportId'])
-                        break;
-                }
+                .limit(2);
+
+            if (latestStatuses == null || latestStatuses.length === 0) return;
+
+            const currentStatus = latestStatuses[0]?.status;
+            const previousStatus = latestStatuses.length > 1 ? latestStatuses[1]?.status : null;
+
+            // Transition: revision → pending means the student answered the revision request.
+            if (previousStatus === "revision" && currentStatus === "pending") {
+                await onRevisionAnswered(data['reportId']);
+                return;
+            }
+
+            // Otherwise, dispatch notification based on the new (current) status.
+            switch (currentStatus) {
+                case "in_progress":
+                    await reportInProgress(data['reportId']);
+                    break;
+                case "resolved":
+                    await reportResolved(data['reportId']);
+                    break;
+                case "revision":
+                    await reportRevision(data['reportId']);
+                    break;
+                case "rejected":
+                    await reportRejected(data['reportId']);
+                    break;
             }
         }
     );
