@@ -41,7 +41,7 @@ export async function checkMahasiswaDetail(userId: String){
 }
 export async function checkPenindakDetail(userId: String){
     const detail = await db.query.penindakDetails.findFirst({
-        where: eq(schema.mahasiswaDetails.userId, userId)
+        where: eq(schema.penindakDetails.userId, userId)
     });
     if (detail==null){
         return false
@@ -49,6 +49,17 @@ export async function checkPenindakDetail(userId: String){
         return true
     }
 }
+export async function checkAdminDetail(userId: String){
+    const detail = await db.query.adminDetails.findFirst({
+        where: eq(schema.adminDetails.userId, userId)
+    });
+    if (detail==null){
+        return false
+    }else{
+        return true
+    }
+}
+
 
 const resend = new Resend(process.env.RESEND_SECRET_KEY!);
 

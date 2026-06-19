@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../../db/db_index';
 import { adminDetails, firebaseTokens, mahasiswaDetails, penindakDetails, userRoles, users } from '../../db/schema';
 import Elysia, { redirect, status, t } from 'elysia';
-import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
+import { auth, checkAdminDetail, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
 import { boss } from '../PG-BOSS';
 import { getAllUser } from './utils';
@@ -99,7 +99,13 @@ export function auth_setup(app: Elysia) {
                             }
                             break;
                         case "ADMIN":
-                            console.log("Error on admin");
+                            const admin_res = await checkAdminDetail(user.id)
+                            if (!admin_res) {
+                                throw status(401, {
+                                    code: "EMPTY_ADMIN_DETAIL",
+                                    message: "Silakan isi detail admin",
+                                });
+                            }
                             break;
                         default:
                             throw status(401, {
@@ -396,7 +402,10 @@ export function auth_setup(app: Elysia) {
                     }
                 })
                 if (retrieved_user == null){
-                    return status(500);
+                    return status(500, {
+                        'status':'failed',
+                        'message':'Gagal menambahkan akun penindak'
+                    });
                 }
                 await db.insert(penindakDetails)
                     .values({
@@ -412,6 +421,10 @@ export function auth_setup(app: Elysia) {
                         adminId: user.id
                     }
                 );
+                return status(200, {
+                    'status':'success',
+                    'message':'Berhasil menambahkan akun penindak'
+                })
             },{
                 body: t.Object({
                     name: t.String(),
@@ -580,11 +593,15 @@ export function auth_setup(app: Elysia) {
                 auth: true
             })
             .get('/get-all', async ({ query:{page, userRoleId, keyword}, user})=>{
-                return await getAllUser(
-                    userRoleId,
-                    keyword,
-                    page
-                );
+                try{
+                    return await getAllUser(
+                        userRoleId,
+                        keyword,
+                        page
+                    );
+                }catch(e){
+                    console.log(e);
+                }
             },{
                 query: t.Object({
                     page: t.Optional(t.Number()),
