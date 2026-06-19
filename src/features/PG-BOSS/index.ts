@@ -12,6 +12,7 @@ export const boss = new PgBoss({
 
 export async function initQueue() {
     await boss.start();
+    console.log('start');
     await boss.createQueue('do-work');
     await boss.createQueue('do-notify');
     await boss.createQueue('daily-reminder');
@@ -42,6 +43,7 @@ export async function initQueue() {
         // "data":{"to":"user@example.com","template":"welcome"},"expireInSeconds":900,"heartbeatSeconds":null,"groupId":null,"groupTier":null,"signal":{}}]
         console.log(`Job: ${JSON.stringify(job[0]?.data)}`);
         const data = job[0]?.data as Record<string, string>;
+        console.log("userId: ", data["userId"]);
         if (data==null) return;
         pushNotifForUser(
             // @ts-expect-error
@@ -84,6 +86,7 @@ export async function initQueue() {
         { batchSize: 1 },
         async (job)=>{
             const data = job[0]?.data as Record<string, any>;
+            console.log("Creation Notif")
             if (data['departmentId']==null){
                 console.log("Error on on-report-created, ensure data is correct")
             }
@@ -100,6 +103,7 @@ export async function initQueue() {
         { batchSize: 1 },
         async (job)=>{
             const data = job[0]?.data as Record<string, any>;
+            console.log('changed');
             if (data['reportId']==null){
                 console.log("Error on on-reportStatus-changed, ensure data is correct")
                 return;
@@ -144,7 +148,7 @@ export async function initQueue() {
     );
 }
 // "report_urgent"|"report_general"
-export function setupPgBoss(app: Elysia){
+export async function setupPgBoss(app: Elysia){
     app.get('/do-work', async ()=>{
         const jobId = await  boss.send(
             'do-work',
@@ -206,6 +210,5 @@ export function setupPgBoss(app: Elysia){
         body: t.Object({
         })
     })
+    await initQueue();
 }
-
-await initQueue();

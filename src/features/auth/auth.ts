@@ -181,27 +181,18 @@ export const auth = betterAuth({
                 },
             },
         },
-        // session: {
-        //     create:{
-        //         before: async (userContext)=>{
-        //             // 2. Cari data user tersebut di database via Drizzle
-        //             console.log(userContext);
-        //             const user = await db.query.users.findFirst({
-        //                 where: eq(users.id, userContext.userId),
-        //                 with: {
-        //                     userRole: {
-        //                         columns: {
-        //                             name: true
-        //                         }
-        //                     },
-        //                 }
-        //             })
-        //             console.log(user);
-                    
-        //             return true;
-        //         }
-        //     },
-        // }
+        session: {
+            create:{
+                after: async (session, ctx) => {
+                    // Fires after session is successfully saved to DB
+                    await db.update(users)
+                        .set({
+                            lastLogin: new Date()
+                        })
+                        .where(eq(users.id, session.userId));
+                },
+            },
+        }
     },
     emailAndPassword: {
         autoSignIn: true,
@@ -213,15 +204,15 @@ export const auth = betterAuth({
             const expiresAt = new Date(
                 Date.now() + RESET_PASSWORD_EXPIRES_IN * 1000
             );
-            // const { data, error } = await resend.emails.send({
-            //             from: 'noreply@update.ariear.my.id',
-            //             to: user.email, 
-            //             subject: 'Reset Password Akun',
-            //             html: createHtmlResetPassword(url, user.name, expiresAt)
-            //         });
-            // if (error) {
-            //     return console.error('Gagal mengirim:', error);
-            // }
+            const { data, error } = await resend.emails.send({
+                        from: 'noreply@update.ariear.my.id',
+                        to: user.email, 
+                        subject: 'Reset Password Akun',
+                        html: createHtmlResetPassword(url, user.name, expiresAt)
+                    });
+            if (error) {
+                return console.error('Gagal mengirim:', error);
+            }
             
             // console.log(createHtmlEmailVerif(url, user.name, expiresAt));
             console.log('Url: ', url);
@@ -303,7 +294,6 @@ export const auth = betterAuth({
     // Filter domain email NIM.univ.ac.id
     hooks: {
         before: createAuthMiddleware(async (ctx) => {
-            console.log(ctx.path);
             if (
                 ctx.path === "/sign-up/email" &&
                 ctx.request?.method === "POST"

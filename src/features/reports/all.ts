@@ -265,15 +265,13 @@ export async function createFeedback(userId: string, reportId: number, status: s
                 });
         }
     }
-
-    await boss.send(
-        'on-reportStatus-changed',
-        {
-            reportId: reportId,
-            status: status
-        }
-    )
-
+     await boss.send(
+            'on-reportStatus-changed',
+            {
+                reportId: reportId,
+                status: status
+            }
+        )
     return {
         'status': 'success',
         'message': 'Berhasil memberikan feedback'
