@@ -37,7 +37,7 @@ async function main() {
     reportSetup(app);
     firebaseSetup(app);
     // Only for testing, comment setupPgBoss
-    setupPgBoss(app);
+    await setupPgBoss(app);
     app.get('/', () => ({ hello: 'Bun👋' }), {
             auth:true
         })

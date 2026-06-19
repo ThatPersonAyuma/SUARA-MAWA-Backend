@@ -255,22 +255,17 @@ export async function createFeedback(userId: string, reportId: number, status: s
                     fileId: storeFileId
                 });
         }
-        await boss.send(
+    }
+     await boss.send(
             'on-reportStatus-changed',
             {
                 reportId: reportId,
                 status: status
             }
         )
-        return {
-            'status': 'success',
-            'message': 'Berhasil memberikan feedback'
-        }
-    } else {
-        return {
-            'status': 'success',
-            'message': 'Berhasil memberikan feedback'
-        }
+    return {
+        'status': 'success',
+        'message': 'Berhasil memberikan feedback'
     }
 }
 

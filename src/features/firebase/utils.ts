@@ -16,14 +16,14 @@ type NotifMessage = {
     token: string
 }
 
-export const ForADay_Channel_ID = 24;
-export const PenindakCreated_Channel_ID = 11;
-export const ReportCreated_Channel_ID = 12;
-export const ReportRevisioned_Channel_ID = 13;
-export const ReportInProgress_Channel_ID = 14;
-export const ReportResolved_Channel_ID = 15;
-export const ReportRevision_Channel_ID = 16;
-export const ReportRejected_Channel_ID = 17;
+export const ForADay_Channel_ID = "24";
+export const PenindakCreated_Channel_ID = "11";
+export const ReportCreated_Channel_ID = "12";
+export const ReportRevisioned_Channel_ID = "13";
+export const ReportInProgress_Channel_ID = "14";
+export const ReportResolved_Channel_ID = "15";
+export const ReportRevision_Channel_ID = "16";
+export const ReportRejected_Channel_ID = "17";
 
 export async function pushNotifForUser(userId: string, title: string, body: string, channelId: "report_urgent"|"report_general", data: Object){
     const registrationToken = await db.query.firebaseTokens.findMany({
@@ -33,29 +33,27 @@ export async function pushNotifForUser(userId: string, title: string, body: stri
             token: true
         }
     })
-    for (let i = 0; i < registrationToken.length; i++) {
-        const message = {
-            notification: {
-                title: title,
-                body: body,
-            },
-            android: {
-                "notification": {
-                    "channel_id": channelId
-                }
-            },
-            // Data tambahan (opsional) untuk diproses di dalam aplikasi
-            data: data,
-            token: registrationToken[i]!.token
-        };
-        messaging.send(message).then((response: any) => {
-            
-        })
-        .catch((error: any) => {
-            // check jika error nya merupakan token not registered, hapus jika not registered
-            db.delete(firebaseTokens).where(eq(firebaseTokens.id, registrationToken[i]!.id))
-            // console.log('Gagal mengirim notifikasi:', error);
-        });
+    console.log(registrationToken);
+    for (const tokenData of registrationToken) {
+        try {
+            const response = await messaging.send({
+                notification: {
+                    title,
+                    body,
+                },
+                android: {
+                    notification: {
+                        channel_id: channelId
+                    }
+                },
+                data,
+                token: tokenData.token
+            });
+
+            console.log("Success:", response);
+        } catch (error) {
+            console.log("Error:", error);
+        }
     }
 }
 

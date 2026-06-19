@@ -134,7 +134,7 @@ export function reportSetup(app: Elysia) {
                     },)
                     .group('/feedback', (feedbackApp) =>
                         feedbackApp
-                            .post('/create', ({ body, user }) => {
+                            .post('/create', async ({ body, user }) => {
                                 const filesArray = Array.isArray(body.files)
                                     ? body.files
                                     : (body.files ? [body.files] : null);
@@ -142,15 +142,18 @@ export function reportSetup(app: Elysia) {
                                 const namesArray = Array.isArray(body.names)
                                     ? body.names
                                     : (body.names ? [body.names] : null);
-
-                                return createFeedback(
+                                console.log("Start Craet")
+                                try{return  await createFeedback(
                                     user.id,
                                     body.reportId,
                                     body.status,
                                     body.description,
                                     filesArray as File[] | null,
                                     namesArray as string[] | null
-                                );
+                                );}
+                                catch(e){
+                                    console.log(e);
+                                }
                             }, {
                                 body: t.Object({
                                     reportId: t.Numeric(),

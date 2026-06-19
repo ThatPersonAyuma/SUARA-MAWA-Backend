@@ -5,6 +5,8 @@ import Elysia, { redirect, status, t } from 'elysia';
 import { auth, checkMahasiswaDetail, checkPenindakDetail } from './auth';
 import { APIError } from 'better-auth';
 import { boss } from '../PG-BOSS';
+import { getAllUser } from './utils';
+import { createAdmin, updateProfile } from './profile';
 
 enum Stage {
     Login = "Login",
@@ -46,7 +48,6 @@ export function auth_setup(app: Elysia) {
         .macro({
             auth: {
                 async resolve({ status, request: { headers } }) {
-                    console.log("Headers: ", headers);
                     const session = await auth.api.getSession({
                         headers
                     })
@@ -98,6 +99,7 @@ export function auth_setup(app: Elysia) {
                             }
                             break;
                         case "ADMIN":
+                            console.log("Error on admin");
                             break;
                         default:
                             throw status(401, {
@@ -117,6 +119,7 @@ export function auth_setup(app: Elysia) {
                             message: "Silakan verifikasi nomor telepon anda",
                         });
                     }
+                    
                     return {
                         user: user,
                         session: session.session
@@ -350,6 +353,29 @@ export function auth_setup(app: Elysia) {
             }, {
                 auth: true
             })
+            .post('/create/admin', async ({body:{
+                name, email, phoneNumber, password, nik, departmentId
+            }, user})=>{
+                await createAdmin(
+                    name,
+                    email,
+                    phoneNumber,
+                    password,
+                    nik,
+                    departmentId,
+                    user.name
+                );
+            }, {
+                body:t.Object({
+                    name: t.String(),
+                    email: t.String(),
+                    phoneNumber: t.String(),
+                    password: t.String(),
+                    nik: t.String(),
+                    departmentId: t.Number()
+                }),
+                adminAuth: true
+            })
             .post('/penindak/created', async({body:{name, email, password, phoneNumber, nik, departmentId}, user})=>{
                 // Implement admin creation here
                 const roles = await db.query.userRoles.findMany();
@@ -401,6 +427,26 @@ export function auth_setup(app: Elysia) {
                 try {
                     const result = await db.query.mahasiswaDetails.findFirst({
                         where: eq(mahasiswaDetails.userId, user.id)
+                    });
+                    return status(200, {
+                        "status": result != null ? "success" : "failed",
+                        "data": result
+                    });
+                } catch (e) {
+                    throw status(500, {
+                        'message': e
+                    });
+                }
+            }, {
+                onboardAuth: true
+            })
+            .get("/penindak-detail", async ({ user }) => {
+                try {
+                    const result = await db.query.penindakDetails.findFirst({
+                        columns: {
+                            nik: true
+                        },
+                        where: eq(penindakDetails.userId, user.id)
                     });
                     return status(200, {
                         "status": result != null ? "success" : "failed",
@@ -498,6 +544,54 @@ export function auth_setup(app: Elysia) {
                         pattern: '\.@mail.unej.ac.id' 
                     })
                 })
+            })
+            .post('/update', async ({ body:{nim, nik, phoneNumber, file, name}, user })=>{
+                try{
+                    await updateProfile(
+                        user.id,
+                        user.photoProfileId,
+                        phoneNumber,
+                        // @ts-ignore
+                        user.userRole.name,
+                        name,
+                        nim,
+                        nik,
+                        file
+                    );
+                    return status(200, {
+                        'status':"success",
+                        "message":"Success update user profile"
+                    })
+                }catch(e){
+                    console.log(e);
+                    return status(500, {
+                        'status':"failed",
+                        "message":"Error on update profile"
+                    })
+                }
+            },{
+                body: t.Object({
+                    nim: t.Nullable(t.String()),
+                    nik: t.Nullable(t.String()),
+                    phoneNumber: t.Nullable(t.String()),
+                    file: t.Optional(t.Nullable(t.File())),
+                    name: t.Nullable(t.String())
+                }),
+                auth: true
+            })
+            .get('/get-all', async ({ query:{page, userRoleId, keyword}, user})=>{
+                return await getAllUser(
+                    userRoleId,
+                    keyword,
+                    page
+                );
+            },{
+                query: t.Object({
+                    page: t.Optional(t.Number()),
+                    userRoleId: t.Optional(t.Number()),
+                    keyword: t.Optional(t.String())
+                }),
+                // adminAuth: true
             })
         )
         // .get("/check/phone/is_verified", async ({ request, user })=>{

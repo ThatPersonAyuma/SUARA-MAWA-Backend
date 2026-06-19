@@ -182,6 +182,7 @@ export async function onReportCreated(departmentId: number, reportCategoryId: nu
         },
         where: eq(penindakDetails.departmentId, departmentId)
     });
+    console.log(penindaks);
     for (let i = 0; i < penindaks.length; i++){
         await pushNotifForUser(
             penindaks[i]!.user.id,
